@@ -1,0 +1,178 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-14T18:00:00Z",
+  "title": "Design System: Bookshelf",
+  "extensions": {
+    "colorMeta": {
+      "tint": { "role": "primary", "displayName": "Evergreen Tint", "canonical": "#177a63", "oklch": "oklch(52.0% 0.094 172)", "tonalRamp": ["#001507", "#003220", "#00513d", "#05725b", "#3a957c", "#60b89f", "#85ddc3", "#abffe8"] },
+      "tint-dark": { "role": "primary", "displayName": "Evergreen Tint (dark scheme)", "canonical": "#40cf9f", "oklch": "oklch(76.7% 0.140 166)", "tonalRamp": ["#001800", "#003714", "#005730", "#00794f", "#009c6f", "#2ac091", "#5ce6b5", "#86ffd9"] },
+      "on-tint": { "role": "primary", "displayName": "On Tint", "canonical": "#ffffff" },
+      "on-tint-dark": { "role": "primary", "displayName": "On Tint (dark scheme)", "canonical": "#052a1f", "tonalRamp": ["#001108", "#072c21", "#274a3e", "#466a5d", "#678c7d", "#89afa0", "#add3c4", "#d1f9e9"] },
+      "danger": { "role": "secondary", "displayName": "System Red", "canonical": "#d70015", "oklch": "oklch(55.3% 0.225 27)", "tonalRamp": ["#3c0000", "#670000", "#930000", "#c10000", "#eb2a2a", "#ff6156", "#ff8e7f", "#ffbaa9"] },
+      "danger-dark": { "role": "secondary", "displayName": "System Red (dark scheme)", "canonical": "#ff6961", "tonalRamp": ["#370000", "#610000", "#8b0000", "#b21b21", "#db4843", "#ff6e65", "#ff968b", "#ffc1b4"] },
+      "ground": { "role": "neutral", "displayName": "System Ground", "canonical": "#ffffff", "tonalRamp": ["#0b0b0b", "#252525", "#424242", "#616161", "#828282", "#a5a5a5", "#c9c9c9", "#eeeeee"] },
+      "ground-dark": { "role": "neutral", "displayName": "System Ground (dark scheme)", "canonical": "#0c0c0d" },
+      "sheet": { "role": "neutral", "displayName": "Sheet Grey", "canonical": "#f2f2f7", "tonalRamp": ["#0b0b0e", "#252528", "#414145", "#616165", "#828286", "#a4a4a9", "#c8c8cd", "#eeeef3"] },
+      "sheet-dark": { "role": "neutral", "displayName": "Sheet Grey (dark scheme)", "canonical": "#1c1c1e" },
+      "group": { "role": "neutral", "displayName": "Group White", "canonical": "#ffffff" },
+      "group-dark": { "role": "neutral", "displayName": "Group (dark scheme)", "canonical": "#2c2c2e" },
+      "label": { "role": "neutral", "displayName": "Label", "canonical": "#111113", "tonalRamp": ["#0b0b0d", "#252527", "#424244", "#616163", "#828285", "#a5a5a7", "#c9c9cc", "#eeeef1"] },
+      "label-dark": { "role": "neutral", "displayName": "Label (dark scheme)", "canonical": "#f5f5f7" },
+      "label-secondary": { "role": "neutral", "displayName": "Secondary Label", "canonical": "#636366" },
+      "label-secondary-dark": { "role": "neutral", "displayName": "Secondary Label (dark scheme)", "canonical": "#a1a1a6" },
+      "separator": { "role": "neutral", "displayName": "Separator", "canonical": "rgba(60, 60, 67, .2)" },
+      "separator-dark": { "role": "neutral", "displayName": "Separator (dark scheme)", "canonical": "rgba(84, 84, 88, .6)" },
+      "fill": { "role": "neutral", "displayName": "System Fill", "canonical": "rgba(118, 118, 128, .12)" },
+      "fill-strong": { "role": "neutral", "displayName": "System Fill Strong", "canonical": "rgba(118, 118, 128, .2)" },
+      "fill-dark": { "role": "neutral", "displayName": "System Fill (dark scheme)", "canonical": "rgba(118, 118, 128, .24)" },
+      "fill-strong-dark": { "role": "neutral", "displayName": "System Fill Strong (dark scheme)", "canonical": "rgba(118, 118, 128, .36)" },
+      "segment-on": { "role": "neutral", "displayName": "Segment Thumb", "canonical": "#ffffff" },
+      "segment-on-dark": { "role": "neutral", "displayName": "Segment Thumb (dark scheme)", "canonical": "#636366" },
+      "glass": { "role": "neutral", "displayName": "Frosted Glass", "canonical": "rgba(255, 255, 255, .72)" },
+      "glass-dark": { "role": "neutral", "displayName": "Frosted Glass (dark scheme)", "canonical": "rgba(30, 30, 32, .7)" },
+      "rim": { "role": "neutral", "displayName": "Glass Rim", "canonical": "rgba(0, 0, 0, .08)" },
+      "rim-dark": { "role": "neutral", "displayName": "Glass Rim (dark scheme)", "canonical": "rgba(255, 255, 255, .1)" },
+      "lift": { "role": "neutral", "displayName": "Lift Shadow", "canonical": "rgba(20, 30, 25, .16)" },
+      "lift-dark": { "role": "neutral", "displayName": "Lift Shadow (dark scheme)", "canonical": "rgba(0, 0, 0, .5)" },
+      "mark-material": { "role": "neutral", "displayName": "Mark Material", "canonical": "rgba(0, 0, 0, .55)" },
+      "cloth-navy": { "role": "tertiary", "displayName": "Navy Cloth", "canonical": "#2e4a7d" },
+      "cloth-oxblood": { "role": "tertiary", "displayName": "Oxblood Cloth", "canonical": "#7a2e3b" },
+      "cloth-ochre": { "role": "tertiary", "displayName": "Ochre Cloth", "canonical": "#8a5a1f" },
+      "cloth-violet": { "role": "tertiary", "displayName": "Violet Cloth", "canonical": "#4b3f72" },
+      "cloth-walnut": { "role": "tertiary", "displayName": "Walnut Cloth", "canonical": "#6b4e3d" },
+      "cloth-plum": { "role": "tertiary", "displayName": "Plum Cloth", "canonical": "#8c3b5e" },
+      "cloth-slate": { "role": "tertiary", "displayName": "Slate Cloth", "canonical": "#35495e" },
+      "cloth-rust": { "role": "tertiary", "displayName": "Rust Cloth", "canonical": "#9a4a2f" },
+      "cloth-graphite": { "role": "tertiary", "displayName": "Graphite Cloth", "canonical": "#3a3f47" },
+      "cloth-aubergine": { "role": "tertiary", "displayName": "Aubergine Cloth", "canonical": "#5c2f55" }
+    },
+    "typographyMeta": {
+      "large-title": { "displayName": "Large Title", "purpose": "List name at the top of the main view; collapses to a 17px semibold nav title on scroll." },
+      "title": { "displayName": "Title", "purpose": "Sheet headings, book title in the book sheet, empty-state heading." },
+      "headline": { "displayName": "Headline", "purpose": "Result row titles, button labels, collapsed nav title." },
+      "body": { "displayName": "Body", "purpose": "Base size; search input, menu items, author in the book sheet." },
+      "subhead": { "displayName": "Subhead", "purpose": "Book count, row authors, helper messages." },
+      "cover-title": { "displayName": "Cover Title", "purpose": "Title on generated cloth covers; 13px in the book sheet, with an 11px author at the foot." },
+      "segment": { "displayName": "Segment", "purpose": "Segmented control labels; 600 when selected." },
+      "mark": { "displayName": "Mark", "purpose": "Queue numbers and ratings inside cover ribbons and badges." },
+      "caption": { "displayName": "Caption", "purpose": "Tab bar labels." }
+    },
+    "shadows": [
+      { "name": "dock", "value": "0 10px 30px var(--lift), inset 0 0 0 .5px var(--rim)", "purpose": "Floating tab bar (Add button uses 0 10px 26px)." },
+      { "name": "menu", "value": "0 16px 40px var(--lift), inset 0 0 0 .5px var(--rim)", "purpose": "More popover menu." },
+      { "name": "lifted-cover", "value": "0 10px 24px var(--lift)", "purpose": "Cover inside the book sheet." },
+      { "name": "segment-thumb", "value": "0 2px 6px rgba(0, 0, 0, .12), inset 0 0 0 .5px var(--rim)", "purpose": "Selected segment of a segmented control." },
+      { "name": "hairline", "value": "0 .5px 0 var(--sep)", "purpose": "Scrolled nav bar, row separators, scan footer." },
+      { "name": "field-focus", "value": "0 0 0 2px color-mix(in srgb, var(--tint) 55%, transparent)", "purpose": "Search field focus ring." },
+      { "name": "glass", "value": "background: var(--glass); backdrop-filter: blur(24px) saturate(180%)", "purpose": "Material for chrome floating over covers; opaque group colour under prefers-reduced-transparency." },
+      { "name": "mark-glass", "value": "background: rgba(0, 0, 0, .5-.55); backdrop-filter: blur(12px)", "purpose": "Ribbons and badges on covers." },
+      { "name": "scrim", "value": "rgba(0, 0, 0, .35)", "purpose": "Sheet backdrop." }
+    ],
+    "motion": [
+      { "name": "press", "value": "transform .15s ease-out", "purpose": "Cover (.96 + brightness .9), primary (.97), Add button (.92) press feedback." },
+      { "name": "state", "value": ".2s", "purpose": "Tab and segment colour changes, nav bar hairline and mini title fade, cover image fade-in." },
+      { "name": "sheet-rise", "value": ".28s cubic-bezier(.2, .9, .25, 1)", "purpose": "Sheet enters from the bottom." },
+      { "name": "sheet-drag", "value": "transform .26s cubic-bezier(.3, .8, .25, 1)", "purpose": "Sheet snaps back or dismisses after drag." },
+      { "name": "cover-lift", "value": "view-transition-group(lift) .3s cubic-bezier(.2, .9, .25, 1)", "purpose": "Tapped cover lifts into the book sheet; root cross-fade .22s." },
+      { "name": "star-pop", "value": ".18s cubic-bezier(.3, 1.6, .5, 1), 20ms stagger", "purpose": "Stars pop from .55 scale when rated." },
+      { "name": "skeleton", "value": "1.2s ease-in-out infinite alternate, to opacity .45", "purpose": "Loading placeholders in search results." },
+      { "name": "reduced-motion", "value": "all animation and transition none", "purpose": "prefers-reduced-motion: reduce; view transition skipped." }
+    ],
+    "breakpoints": [
+      { "name": "wide", "value": "600px", "purpose": "Grid becomes auto-fill columns of min 150px; sheet max width 600px, dock max 560px." }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Capsule Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Evergreen capsule for the one main action in a context: Add a Book, Scan Barcode.",
+      "html": "<button class=\"ds-pill\"><svg class=\"ds-ic\" viewBox=\"0 0 256 256\" aria-hidden=\"true\"><path d=\"M228,128a12,12,0,0,1-12,12H140v76a12,12,0,0,1-24,0V140H40a12,12,0,0,1,0-24h76V40a12,12,0,0,1,24,0v76h76A12,12,0,0,1,228,128Z\"/></svg>Add a Book</button>",
+      "css": ".ds-pill { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 20px; border: 0; border-radius: 999px; font: 600 17px -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; color: var(--on-tint, #fff); background: var(--tint, #177a63); cursor: pointer; transition: transform .15s ease-out, opacity .15s; } .ds-pill .ds-ic { width: 22px; height: 22px; fill: currentColor; } .ds-pill:active { transform: scale(.97); opacity: .9; } .ds-pill:focus-visible { outline: 2px solid var(--tint, #177a63); outline-offset: 2px; }"
+    },
+    {
+      "name": "Floating Tab Bar with Add",
+      "kind": "nav",
+      "refersTo": "tab-bar",
+      "description": "Glass capsule of four list tabs with a separate round Add button under the thumb.",
+      "html": "<nav class=\"ds-dock\"><div class=\"ds-tabs\" role=\"tablist\"><button role=\"tab\" aria-selected=\"true\"><svg class=\"ds-ic\" viewBox=\"0 0 256 256\"><path d=\"M184,32H72A16,16,0,0,0,56,48V224a8,8,0,0,0,12.24,6.78L128,193.43l59.77,37.35A8,8,0,0,0,200,224V48A16,16,0,0,0,184,32Z\"/></svg>Library</button><button role=\"tab\" aria-selected=\"false\"><svg class=\"ds-ic\" viewBox=\"0 0 256 256\"><path d=\"M184,32H72A16,16,0,0,0,56,48V224a8,8,0,0,0,12.24,6.78L128,193.43l59.77,37.35A8,8,0,0,0,200,224V48A16,16,0,0,0,184,32Zm0,177.57-51.77-32.35a8,8,0,0,0-8.48,0L72,209.57V48H184Z\"/></svg>Up Next</button><button role=\"tab\" aria-selected=\"false\"><svg class=\"ds-ic\" viewBox=\"0 0 256 256\"><path d=\"M178,40c-20.65,0-38.73,8.88-50,23.89C116.73,48.88,98.65,40,78,40a62.07,62.07,0,0,0-62,62c0,70,103.79,126.66,108.21,129a8,8,0,0,0,7.58,0C136.21,228.66,240,172,240,102A62.07,62.07,0,0,0,178,40ZM128,214.8C109.74,204.16,32,155.69,32,102A46.06,46.06,0,0,1,78,56c19.45,0,35.78,10.36,42.6,27a8,8,0,0,0,14.8,0c6.82-16.67,23.15-27,42.6-27a46.06,46.06,0,0,1,46,46C224,155.61,146.24,204.15,128,214.8Z\"/></svg>Wishlist</button></div><button class=\"ds-add\" aria-label=\"Add a book\"><svg class=\"ds-ic\" viewBox=\"0 0 256 256\"><path d=\"M228,128a12,12,0,0,1-12,12H140v76a12,12,0,0,1-24,0V140H40a12,12,0,0,1,0-24h76V40a12,12,0,0,1,24,0v76h76A12,12,0,0,1,228,128Z\"/></svg></button></nav>",
+      "css": ".ds-dock { display: flex; gap: 10px; max-width: 560px; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; } .ds-ic { fill: currentColor; } .ds-tabs { flex: 1; display: flex; height: 64px; padding: 4px; border-radius: 999px; background: var(--glass, rgba(255,255,255,.72)); -webkit-backdrop-filter: blur(24px) saturate(180%); backdrop-filter: blur(24px) saturate(180%); box-shadow: 0 10px 30px var(--lift, rgba(20,30,25,.16)), inset 0 0 0 .5px var(--rim, rgba(0,0,0,.08)); } .ds-tabs button { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border: 0; border-radius: 999px; background: none; color: var(--label, #111113); font-family: inherit; font-size: 11px; font-weight: 600; cursor: pointer; transition: background-color .2s, color .2s; } .ds-tabs button .ds-ic { width: 25px; height: 25px; } .ds-tabs button[aria-selected=true] { color: var(--tint, #177a63); background: var(--fill, rgba(118,118,128,.12)); } .ds-tabs button:active { background: var(--fill-strong, rgba(118,118,128,.2)); } .ds-tabs button:focus-visible, .ds-add:focus-visible { outline: 2px solid var(--tint, #177a63); outline-offset: 2px; } .ds-add { flex: none; display: grid; place-items: center; width: 64px; height: 64px; border: 0; border-radius: 50%; color: var(--on-tint, #fff); background: var(--tint, #177a63); box-shadow: 0 10px 26px var(--lift, rgba(20,30,25,.16)), inset 0 0 0 .5px var(--rim, rgba(0,0,0,.08)); cursor: pointer; transition: transform .15s ease-out; } .ds-add .ds-ic { width: 28px; height: 28px; } .ds-add:active { transform: scale(.92); }"
+    },
+    {
+      "name": "Search Field",
+      "kind": "input",
+      "refersTo": "search-field",
+      "description": "Filled iOS search well for filtering her books or searching Open Library.",
+      "html": "<label class=\"ds-search\"><svg class=\"ds-ic\" viewBox=\"0 0 256 256\" aria-hidden=\"true\"><path d=\"M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z\"/></svg><input type=\"search\" placeholder=\"Title or author\"></label>",
+      "css": ".ds-search { display: flex; align-items: center; gap: 6px; height: 38px; padding: 0 8px; border-radius: 10px; background: var(--fill, rgba(118,118,128,.12)); color: var(--label2, #636366); font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; } .ds-search .ds-ic { width: 18px; height: 18px; fill: currentColor; flex: none; } .ds-search input { flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: none; color: var(--label, #111113); font-family: inherit; font-size: 17px; caret-color: var(--tint, #177a63); -webkit-appearance: none; } .ds-search input::placeholder { color: var(--label2, #636366); } .ds-search:focus-within { box-shadow: 0 0 0 2px color-mix(in srgb, var(--tint, #177a63) 55%, transparent); }"
+    },
+    {
+      "name": "Segmented Control",
+      "kind": "custom",
+      "refersTo": "segmented-control",
+      "description": "Sets a book's list in one tap; also picks the destination list when adding.",
+      "html": "<div class=\"ds-seg\" role=\"radiogroup\"><button role=\"radio\" aria-checked=\"false\">Library</button><button role=\"radio\" aria-checked=\"false\">Up Next</button><button role=\"radio\" aria-checked=\"false\">Wishlist</button><button role=\"radio\" aria-checked=\"true\">Finished</button></div>",
+      "css": ".ds-seg { display: flex; gap: 2px; padding: 2px; border-radius: 10px; background: var(--fill, rgba(118,118,128,.12)); font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; } .ds-seg button { flex: 1; min-height: 34px; border: 0; border-radius: 8px; background: none; color: var(--label, #111113); font-family: inherit; font-size: 14px; font-weight: 500; cursor: pointer; transition: background-color .2s; } .ds-seg button[aria-checked=true] { font-weight: 600; background: var(--seg-on, #fff); box-shadow: 0 2px 6px rgba(0,0,0,.12), inset 0 0 0 .5px var(--rim, rgba(0,0,0,.08)); } .ds-seg button:focus-visible { outline: 2px solid var(--tint, #177a63); outline-offset: 2px; }"
+    },
+    {
+      "name": "Cover Tile with State Marks",
+      "kind": "card",
+      "refersTo": "cover-badge",
+      "description": "Signature 2:3 cover: cloth binding fallback, Up Next ribbon with queue number, Finished star badge.",
+      "html": "<div class=\"ds-grid\"><span class=\"ds-tile\"><span class=\"ds-art\" style=\"background:#8a5a1f\"><b>The Left Hand of Darkness</b><small>Ursula K. Le Guin</small></span><span class=\"ds-badge\"><svg viewBox=\"0 0 256 256\"><path d=\"M234.29,114.85l-45,38.83L203,211.75a16.4,16.4,0,0,1-24.5,17.82L128,198.49,77.47,229.57A16.4,16.4,0,0,1,53,211.75l13.76-58.07-45-38.83A16.46,16.46,0,0,1,31.08,86l59-4.76,22.76-55.08a16.36,16.36,0,0,1,30.27,0l22.75,55.08,59,4.76a16.46,16.46,0,0,1,9.37,28.86Z\"/></svg>5</span></span><span class=\"ds-tile\"><span class=\"ds-art\" style=\"background:#4b3f72;padding-top:42px\"><b>Middlemarch</b><small>George Eliot</small></span><span class=\"ds-ribbon\">3</span></span></div>",
+      "css": ".ds-grid { display: grid; grid-template-columns: repeat(2, 120px); gap: 2px; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; } .ds-tile { position: relative; display: block; aspect-ratio: 2 / 3; overflow: hidden; background: var(--fill, rgba(118,118,128,.12)); transition: transform .15s ease-out, filter .15s; } .ds-tile:active { transform: scale(.96); filter: brightness(.9); } .ds-art { position: absolute; inset: 0; display: flex; flex-direction: column; gap: 6px; padding: 12px; color: #fff; } .ds-art b { font-size: 15px; font-weight: 700; line-height: 1.15; } .ds-art small { margin-top: auto; font-size: 11px; line-height: 1.2; opacity: .86; } .ds-ribbon { position: absolute; top: 0; right: 8px; width: 24px; height: 34px; padding-top: 5px; font-size: 12px; font-weight: 700; text-align: center; color: #fff; background: rgba(0,0,0,.55); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 78%, 0 100%); font-variant-numeric: tabular-nums; } .ds-badge { position: absolute; left: 6px; bottom: 6px; display: flex; align-items: center; gap: 3px; height: 22px; padding: 0 7px; border-radius: 999px; font-size: 12px; font-weight: 600; color: #fff; background: rgba(0,0,0,.5); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); } .ds-badge svg { width: 12px; height: 12px; fill: currentColor; }"
+    },
+    {
+      "name": "Bottom Sheet with Grouped Rows",
+      "kind": "custom",
+      "refersTo": "sheet",
+      "description": "Book sheet: grabber, close well, grouped star rating and destructive row on sheet grey.",
+      "html": "<div class=\"ds-sheet\"><div class=\"ds-grab\"></div><button class=\"ds-close\" aria-label=\"Close\"><svg viewBox=\"0 0 256 256\"><path d=\"M208.49,191.51a12,12,0,0,1-17,17L128,145,64.49,208.49a12,12,0,0,1-17-17L111,128,47.51,64.49a12,12,0,0,1,17-17L128,111l63.51-63.52a12,12,0,0,1,17,17L145,128Z\"/></svg></button><h2>Project Hail Mary</h2><p>Andy Weir</p><div class=\"ds-group ds-rate\"><svg viewBox=\"0 0 256 256\" style=\"width:36px;height:36px;fill:var(--tint, #177a63)\"><path d=\"M234.29,114.85l-45,38.83L203,211.75a16.4,16.4,0,0,1-24.5,17.82L128,198.49,77.47,229.57A16.4,16.4,0,0,1,53,211.75l13.76-58.07-45-38.83A16.46,16.46,0,0,1,31.08,86l59-4.76,22.76-55.08a16.36,16.36,0,0,1,30.27,0l22.75,55.08,59,4.76a16.46,16.46,0,0,1,9.37,28.86Z\"/></svg></div><button class=\"ds-remove\">Remove from Bookshelf</button></div>",
+      "css": ".ds-sheet { position: relative; max-width: 390px; padding: 0 16px 16px; border-radius: 22px 22px 0 0; background: var(--sheet, #f2f2f7); color: var(--label, #111113); font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; font-size: 17px; line-height: 1.3; } .ds-grab { position: relative; height: 22px; } .ds-grab::before { content: ''; position: absolute; top: 7px; left: 50%; width: 36px; height: 5px; margin-left: -18px; border-radius: 3px; background: var(--fill-strong, rgba(118,118,128,.2)); } .ds-close { position: absolute; top: 14px; right: 14px; display: grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: 50%; color: var(--label2, #636366); background: var(--fill, rgba(118,118,128,.12)); cursor: pointer; } .ds-close svg { width: 15px; height: 15px; fill: currentColor; } .ds-close:focus-visible, .ds-remove:focus-visible { outline: 2px solid var(--tint, #177a63); outline-offset: 2px; } .ds-sheet h2 { margin: 10px 40px 0 0; font-size: 22px; font-weight: 700; line-height: 1.2; } .ds-sheet p { margin: 4px 0 20px; color: var(--label2, #636366); } .ds-group { margin-bottom: 16px; border-radius: 12px; background: var(--group, #fff); overflow: hidden; } .ds-rate { display: flex; justify-content: center; padding: 8px 0; min-height: 66px; } .ds-remove { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 50px; border: 0; border-radius: 12px; font: inherit; color: var(--danger, #d70015); background: var(--group, #fff); cursor: pointer; } .ds-remove:active { background: var(--fill, rgba(118,118,128,.12)); }"
+    },
+    {
+      "name": "Icon Well Button",
+      "kind": "button",
+      "refersTo": "button-close",
+      "description": "Tint glyph in a circular fill well (More, per-result Add); becomes a solid tint check once added.",
+      "html": "<button class=\"ds-well\" aria-label=\"Add\"><svg viewBox=\"0 0 256 256\"><path d=\"M228,128a12,12,0,0,1-12,12H140v76a12,12,0,0,1-24,0V140H40a12,12,0,0,1,0-24h76V40a12,12,0,0,1,24,0v76h76A12,12,0,0,1,228,128Z\"/></svg></button><button class=\"ds-well\" disabled aria-label=\"Added\"><svg viewBox=\"0 0 256 256\"><path d=\"M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z\"/></svg></button>",
+      "css": ".ds-well { display: inline-grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 50%; background: none; color: var(--tint, #177a63); cursor: pointer; } .ds-well svg { width: 30px; height: 30px; padding: 6px; border-radius: 50%; fill: currentColor; background: var(--fill, rgba(118,118,128,.12)); } .ds-well:active { opacity: .5; } .ds-well:focus-visible { outline: 2px solid var(--tint, #177a63); outline-offset: 2px; } .ds-well:disabled { cursor: default; } .ds-well:disabled svg { color: var(--on-tint, #fff); background: var(--tint, #177a63); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Photos Library of Her Shelf",
+    "overview": "Bookshelf borrows the iPhone's own material instead of inventing a brand on top of it. Her covers fill the screen in a gapless grid the way photos fill the Photos app; everything else is iOS system chrome kept thin and out of the way: a large title that collapses into a frosted navigation bar, a floating capsule tab bar with a separate round Add button under the thumb, bottom sheets with grabbers, segmented controls and grouped inset rows. Light and dark follow the phone.\n\nThe density is photographic: the covers are the interface, and chrome carries only one colour of its own. A single deep green tint marks what can be tapped and what is selected. A book's state (queued, wished, finished) is never a hue; it is a small neutral frosted mark placed on the cover itself. When a cover has no image, it becomes a plain typographic binding in one of ten muted cloth colours, so the grid never shows a hole.\n\nMotion is short and state-bound (150 to 300ms): the tapped cover lifts out of the grid into the book sheet through a view transition, sheets rise and drag down to dismiss, stars pop in sequence. Nothing moves at rest.",
+    "keyCharacteristics": [
+      "One strict gapless cover grid (2px gutters, 2:3 covers), no cards.",
+      "iOS system face at every size, one family, hierarchy by size and weight only.",
+      "One tint for action and selection; state is a neutral mark on the cover.",
+      "Frosted glass for chrome that floats over covers; flat tonal grounds everywhere else.",
+      "Capsules for buttons and bars, nested radii for containers."
+    ],
+    "rules": [
+      { "name": "The One Tint Rule", "body": "Evergreen is for actions and selection only. It never colours a book's state, a list, or a heading.", "section": "colors" },
+      { "name": "The State Is a Mark Rule", "body": "Up Next is a bookmark ribbon with her queue number at the top right; Finished is a capsule badge with a star and the rating (or a check when unrated) at the bottom left; Wishlist is a capsule badge with a filled heart. All three use the neutral mark material, never a colour.", "section": "colors" },
+      { "name": "The Covers Bring the Colour Rule", "body": "Chrome stays neutral grey and white (or near-black in dark) so real cover art is the only saturated thing on screen.", "section": "colors" },
+      { "name": "The One Face Rule", "body": "Every string uses the system stack. Emphasis is weight, not a second family, italics, or uppercase.", "section": "typography" },
+      { "name": "The Float Earns Glass Rule", "body": "Only surfaces that hover over the covers (navigation bar when scrolled, tab bar, menu) are frosted. Sheets and groups are opaque tone.", "section": "elevation" },
+      { "name": "The Soft Lift Rule", "body": "Shadows are blurred and tinted by the lift colour, never hard or offset.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do let covers run edge to edge in the 2px-gap grid; keep chrome to the header, the floating dock and sheets.",
+      "Do use the tint (#177a63 light, #40cf9f dark) only for actions, selection, focus and stars.",
+      "Do show a book's state as a neutral frosted mark on the cover: ribbon with queue number, star badge, heart badge.",
+      "Do give every cover without an image a cloth binding picked by title hash, so the grid has no gaps.",
+      "Do define every colour role in both light and dark, and fall back to opaque group colour under reduced transparency.",
+      "Do keep motion between 150 and 300ms, tied to state change, and switch it off under reduced motion.",
+      "Do keep tap targets at 44px or more and respect the safe-area insets top and bottom."
+    ],
+    "donts": [
+      "Don't put a book's state in a colour, a coloured shelf tab or a tinted cover overlay.",
+      "Don't wrap covers in cards, borders, list rows or gutters wider than 2px in the library view.",
+      "Don't introduce a second typeface, uppercase labels or letter-spaced captions.",
+      "Don't frost surfaces that don't float over the covers, or use hard, offset or untinted heavy shadows.",
+      "Don't add a second accent colour; red is reserved for destructive text."
+    ]
+  }
+}

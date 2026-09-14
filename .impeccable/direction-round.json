@@ -1,0 +1,146 @@
+{
+  "title": "Choose Bookshelf's visual world",
+  "question": "The roll assigned Photos Library. Keep it, take the pick or an alternate, or re-roll.",
+  "options": [
+    {
+      "id": "assigned",
+      "label": "Photos Library",
+      "kicker": "THE ROLL",
+      "lineage": "iOS Photos and Apple Music library grids",
+      "thesis": "Her books as an iPhone library: covers edge to edge, the phone's own grammar around them.",
+      "palette": ["#f2f2f7", "#1c1c1e", "#8e8e93", "#1f8a70"],
+      "materials": ["gapless cover grid", "frosted glass bars and sheets"],
+      "viewport": "Large collapsing title over a gapless three-across cover grid; a floating glass tab bar with a raised scan button under the thumb.",
+      "risk": "Sits closest to what Apple ships; it only earns its place if the grid, sheets and gestures feel truly native.",
+      "raised": [
+        { "from": "operate-a-cutting-bench-select-rail", "raise": "State is a mark on the cover, not a colour: a stamp for read, a folded corner flag for read next." },
+        { "from": "emigre-bitmap-specimen", "raise": "One system face carries every size from large title to caption; no second family." },
+        { "from": "medium-native-ascii-live-scene-render", "raise": "One strict grid rules the screen; covers never sit inside cards." }
+      ],
+      "wireframe": { "cols": 6, "rows": 12, "regions": [
+        { "label": "large title + search", "x": 0, "y": 0, "w": 6, "h": 2 },
+        { "label": "cover", "x": 0, "y": 2, "w": 2, "h": 3, "accent": true },
+        { "label": "cover", "x": 2, "y": 2, "w": 2, "h": 3, "accent": true },
+        { "label": "cover", "x": 4, "y": 2, "w": 2, "h": 3, "accent": true },
+        { "label": "cover", "x": 0, "y": 5, "w": 2, "h": 3, "accent": true },
+        { "label": "cover", "x": 2, "y": 5, "w": 2, "h": 3, "accent": true },
+        { "label": "cover", "x": 4, "y": 5, "w": 2, "h": 3, "accent": true },
+        { "label": "glass tab bar + scan", "x": 0, "y": 10, "w": 6, "h": 2 }
+      ] }
+    },
+    {
+      "id": "model-pick",
+      "label": "Card Catalogue",
+      "kicker": "IMPECCABLE’S PICK",
+      "lineage": "library card catalogues and date-due slips",
+      "thesis": "Every book gets a catalogue card; finishing one stamps the date-due slip.",
+      "palette": ["#2f4f45", "#e9dfc4", "#c23b22", "#1d2320"],
+      "materials": ["index card stock", "rubber date stamp"],
+      "viewport": "A drawer of cover-topped index cards with a brass-pull scan button at the bottom edge.",
+      "risk": "Paper and stamps are where book apps usually land; it can slide into cream-and-serif nostalgia.",
+      "wireframe": { "cols": 6, "rows": 12, "regions": [
+        { "label": "drawer label", "x": 0, "y": 0, "w": 6, "h": 2 },
+        { "label": "card", "x": 0, "y": 2, "w": 6, "h": 3, "accent": true },
+        { "label": "card", "x": 0, "y": 5, "w": 6, "h": 3, "accent": true },
+        { "label": "card", "x": 0, "y": 8, "w": 6, "h": 2 },
+        { "label": "drawer pull", "x": 2, "y": 10, "w": 2, "h": 2 }
+      ] }
+    },
+    {
+      "id": "challenger-cutting-bench",
+      "label": "Cutting Bench",
+      "verdict": "declined",
+      "lineage": "film editing bench select rail",
+      "thesis": "Covers strung as frames along a perforated rail, a tape flag where she stopped.",
+      "palette": ["#ff6a13", "#0b0b0b", "#ffffff"],
+      "materials": ["film grain", "tape flags"],
+      "viewport": "An orange field crossed by a scrubbing strip of cover frames.",
+      "case": "Fuses cleanly as a strip of covers, but readers do not know an editing bench and a single rail hides her collection.",
+      "risk": "Reads as a film tool, not a library.",
+      "kept": "State as a mark, not a hue.",
+      "hero": "https://impeccable.style/worlds/cards/operate-a-cutting-bench-select-rail-hero.webp"
+    },
+    {
+      "id": "challenger-emigre",
+      "label": "Bitmap Specimen",
+      "verdict": "declined",
+      "lineage": "Emigre bitmap type specimens",
+      "thesis": "Book titles set as coarse pixel type at poster scale.",
+      "palette": ["#ffffff", "#111111", "#ff2e63"],
+      "materials": ["halftone", "dot matrix"],
+      "viewport": "A giant pixel title over dense justified columns.",
+      "case": "Type would compete with the covers she wants to browse.",
+      "risk": "The covers stop being the heart of the screen.",
+      "kept": "One face at many sizes.",
+      "hero": "https://impeccable.style/worlds/cards/emigre-bitmap-specimen-hero.webp"
+    },
+    {
+      "id": "challenger-centre-rail",
+      "label": "Centre-Rail Edition",
+      "verdict": "declined",
+      "lineage": "scholarly reference setting",
+      "thesis": "Her books as two columns of small roman around a vermilion key rail.",
+      "palette": ["#1a1a1a", "#e44d26", "#efe8d8"],
+      "materials": ["ruled hairlines", "bone paper"],
+      "viewport": "Two dense text columns with a centre rail of keys.",
+      "case": "Text-first reading layout buries covers and slows adding books.",
+      "risk": "Scholarly and slow on a phone in a store aisle.",
+      "kept": "Hairlines at one device pixel.",
+      "hero": "https://impeccable.style/worlds/cards/rw-centre-rail-reference-setting-hero.webp"
+    },
+    {
+      "id": "challenger-ascii",
+      "label": "ASCII Render",
+      "verdict": "declined",
+      "lineage": "typewriter ASCII art",
+      "thesis": "Covers re-rendered as glyph density on a phosphor grid.",
+      "palette": ["#0a0f0a", "#33ff66"],
+      "materials": ["monospace grid", "phosphor"],
+      "viewport": "A live glyph grid standing in for cover art.",
+      "case": "Destroys the real covers, her one brand commitment.",
+      "risk": "Novelty over her books.",
+      "kept": "One strict grid for the whole screen.",
+      "hero": "https://impeccable.style/worlds/cards/medium-native-ascii-live-scene-render-hero.webp"
+    },
+    {
+      "id": "challenger-cape",
+      "label": "Drawcord Cape",
+      "verdict": "declined",
+      "lineage": "transforming fashion textiles",
+      "thesis": "Lists gathered and released like cloth on a cord.",
+      "palette": ["#0d0d0d", "#c9a24a", "#6b7280"],
+      "materials": ["matte silk", "gold cord"],
+      "viewport": "A black semicircle that pleats into sections.",
+      "case": "No link to books, reading or a phone in a bookstore.",
+      "risk": "Pure metaphor, no task clarity.",
+      "kept": "A single pull as the one primary control.",
+      "hero": "https://impeccable.style/worlds/cards/textiles-weave-drape-fashion-drawcord-transforming-cape-hero.webp"
+    },
+    {
+      "id": "challenger-tensegrity",
+      "label": "Tensegrity Column",
+      "verdict": "declined",
+      "lineage": "kinetic sculpture",
+      "thesis": "Lists held in tension as a breathing force diagram.",
+      "palette": ["#1b1b1b", "#d7d4cc", "#c62828"],
+      "materials": ["carbon rods", "red cord"],
+      "viewport": "A column of struts with books pinned to nodes.",
+      "case": "Engineering diagram fights a personal library.",
+      "risk": "Cold and abstract for her shelf.",
+      "kept": "Distinct slack, balanced and stressed states.",
+      "hero": "https://impeccable.style/worlds/cards/kinetic-sculpture-automata-tensegrity-breathing-column-hero.webp"
+    }
+  ],
+  "reroll": { "registers": ["safer", "bolder"] },
+  "buildPath": { "value": "code" },
+  "canon": true,
+  "canonCard": {
+    "label": "The category standard",
+    "thesis": "A Goodreads or StoryGraph style reading tracker, executed well.",
+    "palette": ["#f7f5f0", "#382110", "#409d69"],
+    "materials": ["list rows with thumbnails", "shelf tabs"],
+    "viewport": "Currently reading at top, shelves as rows, status buttons under each book.",
+    "risk": "Indistinguishable from the apps she could already download."
+  },
+  "steer": true
+}

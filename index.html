@@ -5,183 +5,300 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Bookshelf">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0c0c0d">
 <title>Bookshelf</title>
-<!-- iPhone has Gill Sans built in; Cabin (a Gill/Johnston-inspired face) stands in elsewhere. -->
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cabin:wght@400;600;700&display=swap">
 <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.23.0/umd/index.min.js" integrity="sha384-0ASr5PEWAMtTnWsn0PzKmioHVDA4+QqFiJr94io/0DCrGP6E1gRAmbO6O8y5WZW9" crossorigin="anonymous"></script>
 <style>
-  /* Penguin's 1935 colour code, one colour per list: orange fiction, green crime, cerise travel, blue biography. */
+  /* Photos Library: her covers edge to edge inside the iPhone's own grammar.
+     Shape rule: covers square in the grid, 4px in rows; fields 10px; groups 12px; sheets 22px; buttons and bars full capsule. */
   :root {
-    color-scheme: light;
-    --shelf: #f06b1f; --next: #1c7a58; --wish: #c8326b; --read: #1f4b8e;
-    --ink: #000; --soft: #5f5f5f; --rule: #e4e4e0; --fill: #f1f1ee;
-    --accent: var(--shelf);
-    font-family: 'Gill Sans', 'Gill Sans MT', Cabin, system-ui, sans-serif;
+    color-scheme: light dark;
+    --bg: #ffffff; --sheet: #f2f2f7; --group: #ffffff;
+    --label: #111113; --label2: #636366; --sep: rgba(60, 60, 67, .2);
+    --fill: rgba(118, 118, 128, .12); --fill-strong: rgba(118, 118, 128, .2);
+    --tint: #177a63; --on-tint: #ffffff; --danger: #d70015; --seg-on: #ffffff;
+    --glass: rgba(255, 255, 255, .72); --rim: rgba(0, 0, 0, .08); --lift: rgba(20, 30, 25, .16);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+    -webkit-text-size-adjust: 100%;
   }
-  body[data-tab=next] { --accent: var(--next); }
-  body[data-tab=wish] { --accent: var(--wish); }
-  body[data-tab=read] { --accent: var(--read); }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0c0c0d; --sheet: #1c1c1e; --group: #2c2c2e;
+      --label: #f5f5f7; --label2: #a1a1a6; --sep: rgba(84, 84, 88, .6);
+      --fill: rgba(118, 118, 128, .24); --fill-strong: rgba(118, 118, 128, .36);
+      --tint: #40cf9f; --on-tint: #052a1f; --danger: #ff6961; --seg-on: #636366;
+      --glass: rgba(30, 30, 32, .7); --rim: rgba(255, 255, 255, .1); --lift: rgba(0, 0, 0, .5);
+    }
+  }
   * { box-sizing: border-box; }
-  body { margin: 0; font-size: 17px; line-height: 1.35; color: var(--ink); background: #fff;
-    padding-bottom: calc(70px + env(safe-area-inset-bottom)); }
-  body::before { content: ''; position: fixed; z-index: 3; top: 0; left: 0; right: 0; height: env(safe-area-inset-top); background: var(--accent); transition: background-color .3s; }
+  html { background: var(--bg); }
+  body { margin: 0; min-height: 100dvh; font-size: 17px; line-height: 1.3; color: var(--label); background: var(--bg);
+    padding-bottom: calc(92px + env(safe-area-inset-bottom)); -webkit-tap-highlight-color: transparent; }
   button, input { font: inherit; color: inherit; }
-  :focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  button { cursor: pointer; background: none; border: 0; padding: 0; touch-action: manipulation; }
+  ::selection { background: color-mix(in srgb, var(--tint) 30%, transparent); }
+  input { caret-color: var(--tint); }
+  :focus-visible { outline: 2px solid var(--tint); outline-offset: 2px; }
+  [hidden] { display: none !important; }
+  .ic { width: 22px; height: 22px; flex: none; fill: currentColor; }
+  .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
-  /* The header is a Penguin cover: colour band with oval nameplate, white title panel, colour band. */
-  .cover-head { text-align: center; }
-  .band { background: var(--accent); transition: background-color .3s; }
-  .band.top { padding: calc(22px + env(safe-area-inset-top)) 20px 22px; }
-  .cartouche { display: inline-block; padding: 9px 26px; font-size: 19px; font-weight: 700; color: var(--accent); background: #fff; border-radius: 50%; transition: color .3s; }
-  .band.bottom { height: 30px; }
-  .panel { padding: 28px 24px 26px; }
-  .panel h1 { margin: 0; font-size: 50px; font-weight: 700; line-height: 1; letter-spacing: -0.01em; }
-  .panel h1::after { content: ''; display: block; width: 44px; height: 2px; margin: 16px auto 12px; background: var(--accent); }
-  .panel p { margin: 0; color: var(--soft); }
+  /* Frosted glass is a web approximation of iOS materials, not Apple's Liquid Glass. */
+  .glass { background: var(--glass); -webkit-backdrop-filter: blur(24px) saturate(180%); backdrop-filter: blur(24px) saturate(180%); }
+  @media (prefers-reduced-transparency: reduce) { .glass { background: var(--group); -webkit-backdrop-filter: none; backdrop-filter: none; } }
 
-  .bar { position: sticky; top: env(safe-area-inset-top); z-index: 2; display: flex; gap: 8px; padding: 12px 20px; background: #fff; }
-  input[type=search] { flex: 1; min-width: 0; padding: 10px 14px; font-size: 16px; background: var(--fill); border: 0; border-radius: 10px; -webkit-appearance: none; }
-  .solid { flex: none; padding: 10px 18px; font-weight: 600; color: #fff; background: var(--ink); border: 0; border-radius: 10px; }
-  .solid:active { opacity: .8; }
-  label.solid input, footer input { position: absolute; width: 0; opacity: 0; }
+  /* Navigation bar: empty until the large title scrolls away, then the small title and a hairline appear. */
+  .topbar { position: fixed; z-index: 3; inset: 0 0 auto; height: calc(44px + env(safe-area-inset-top)); padding: env(safe-area-inset-top) 8px 0 16px;
+    display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; box-shadow: 0 .5px 0 transparent; transition: box-shadow .2s, background-color .2s; }
+  body:not(.scrolled) .topbar { background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .topbar #miniTitle { grid-column: 2; font-weight: 600; opacity: 0; transition: opacity .2s; }
+  body.scrolled .topbar { box-shadow: 0 .5px 0 var(--sep); }
+  body.scrolled .topbar #miniTitle { opacity: 1; }
+  .navbtn { grid-column: 3; justify-self: end; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; color: var(--tint); }
+  .navbtn .ic { width: 26px; height: 26px; padding: 3px; border-radius: 50%; background: var(--fill); }
+  .navbtn:active { opacity: .5; }
 
-  /* Covers are the page: a three-across grid, colour strip under each cover shows which list it's on. */
-  ul { list-style: none; margin: 0; padding: 0 20px; }
-  #list { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 26px 14px; padding-top: 10px; counter-reset: n; }
-  .tile { display: flex; flex-direction: column; width: 100%; padding: 0; text-align: left; background: none; border: 0; }
-  .thumb { position: relative; display: block; width: 100%; aspect-ratio: 2 / 3; overflow: hidden; border-bottom: 5px solid var(--c); border-radius: 2px 2px 0 0; box-shadow: 0 2px 6px #0002; }
-  .thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
-  /* No cover image: draw a tiny three-band cover with the title in the white band. */
-  .thumb.blank { display: grid; place-items: center; padding: 0 8px; border-bottom: 0; font-size: 13px; font-weight: 700; line-height: 1.15; text-align: center;
-    background: linear-gradient(var(--c) 0 30%, #fff 30% 72%, var(--c) 72%); }
-  .tile:active .thumb { transform: scale(.97); }
-  .numbered li { counter-increment: n; }
-  .numbered .thumb::after { content: counter(n); position: absolute; top: 6px; left: 6px; display: grid; place-items: center; min-width: 26px; height: 26px;
-    font-size: 15px; font-weight: 700; color: #fff; background: var(--c); border-radius: 50%; box-shadow: 0 0 0 2px #fff; }
-  .t { display: -webkit-box; margin-top: 8px; overflow: hidden; font-size: 15px; font-weight: 600; line-height: 1.2; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-  .a { margin-top: 2px; overflow: hidden; font-size: 13px; color: var(--soft); white-space: nowrap; text-overflow: ellipsis; }
-  .mini { margin-top: 2px; font-size: 13px; letter-spacing: 1px; color: var(--c); }
-  .empty { grid-column: 1 / -1; max-width: 32ch; padding: 18px 0; color: var(--soft); }
+  .head { padding: calc(44px + env(safe-area-inset-top)) 16px 10px; }
+  .head h1 { margin: 0; font-size: 34px; font-weight: 700; line-height: 41px; letter-spacing: .01em; }
+  .count { margin: 0 0 12px; font-size: 15px; color: var(--label2); font-variant-numeric: tabular-nums; }
+  .search { display: flex; align-items: center; gap: 6px; height: 38px; padding: 0 8px; border-radius: 10px; background: var(--fill); color: var(--label2); }
+  .search .ic { width: 18px; height: 18px; }
+  .search input { flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: none; color: var(--label); font-size: 17px; -webkit-appearance: none; }
+  .search input::placeholder { color: var(--label2); }
+  .search:focus-within { box-shadow: 0 0 0 2px color-mix(in srgb, var(--tint) 55%, transparent); }
+  .search input::-webkit-search-cancel-button { filter: grayscale(1); }
 
-  footer { display: flex; gap: 20px; padding: 36px 20px 26px; }
-  footer button, footer label { padding: 6px 0; font-size: 15px; color: var(--soft); background: none; border: 0; text-decoration: underline; text-underline-offset: 3px; }
+  /* The library: one gapless grid of covers, nothing between her and the art. */
+  .grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; }
+  @media (min-width: 600px) { .grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); } }
+  .tile { position: relative; display: block; width: 100%; aspect-ratio: 2 / 3; overflow: hidden; -webkit-user-select: none; user-select: none; }
+  .tile .cover { position: absolute; inset: 0; transition: transform .15s ease-out, filter .15s; }
+  .tile:active .cover { transform: scale(.96); filter: brightness(.9); }
 
-  /* Tab bar doubles as the colour key: each tab carries its list colour along the top edge. */
-  nav { position: fixed; z-index: 2; left: 0; right: 0; bottom: 0; display: flex; padding-bottom: env(safe-area-inset-bottom); background: #fff; box-shadow: 0 -1px 0 var(--rule); }
-  nav button { flex: 1; padding: 16px 0 14px; font-size: 15px; color: var(--soft); background: none; border: 0; border-top: 3px solid var(--c); }
-  nav button.on { padding-top: 13px; font-weight: 700; color: var(--ink); border-top-width: 6px; }
-  nav [data-tab=shelf] { --c: var(--shelf); }
-  nav [data-tab=next] { --c: var(--next); }
-  nav [data-tab=wish] { --c: var(--wish); }
-  nav [data-tab=read] { --c: var(--read); }
+  .cover { position: relative; display: block; overflow: hidden; background: var(--fill); }
+  .cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .2s; }
+  .cover img.in { opacity: 1; }
+  /* No cover image: a plain typographic cover in a colour picked from the title, title at the top, author at the foot. */
+  .art { position: absolute; inset: 0; display: flex; flex-direction: column; gap: 6px; padding: 12px; color: #fff; text-align: left; background: var(--cloth); }
+  .art b { display: -webkit-box; overflow: hidden; font-size: 15px; font-weight: 700; line-height: 1.15; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow-wrap: break-word; -webkit-hyphens: auto; hyphens: auto; }
+  .art small { display: -webkit-box; margin-top: auto; overflow: hidden; font-size: 11px; line-height: 1.2; opacity: .86; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 
-  dialog { padding: 0; border: 0; color: var(--ink); background: #fff; }
-  dialog::backdrop { background: #0006; }
+  /* State is a mark on the cover: a ribbon with her queue number, a small badge for finished or wished. */
+  .ribbon { position: absolute; top: 0; right: 8px; width: 24px; height: 34px; padding-top: 5px; font-size: 12px; font-weight: 700; text-align: center;
+    color: #fff; background: rgba(0, 0, 0, .55); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 78%, 0 100%); font-variant-numeric: tabular-nums; }
+  .badge { position: absolute; left: 6px; bottom: 6px; display: flex; align-items: center; gap: 3px; height: 22px; padding: 0 7px; border-radius: 999px;
+    font-size: 12px; font-weight: 600; color: #fff; background: rgba(0, 0, 0, .5); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+  .badge .ic { width: 12px; height: 12px; }
+  .tile:has(.ribbon) .art { padding-top: 42px; }
 
-  /* Add a book: full screen. */
-  #dlg { width: 100%; height: 100%; max-width: none; max-height: none; margin: 0; padding-bottom: env(safe-area-inset-bottom); }
-  #dlg .band { height: calc(10px + env(safe-area-inset-top)); }
-  #dlg .bar { top: 0; }
-  .dhead { display: flex; align-items: baseline; justify-content: space-between; padding: 18px 20px 2px; }
-  .dhead h2 { margin: 0; font-size: 30px; font-weight: 700; }
-  .text-btn { padding: 8px 0; font-size: 17px; font-weight: 600; background: none; border: 0; }
-  #msg { margin: 2px 20px 4px; font-size: 15px; color: var(--soft); }
-  .book { display: grid; grid-template-columns: 56px 1fr; gap: 14px; padding: 16px 0; border-bottom: 1px solid var(--rule); }
-  .book .thumb { width: 56px; }
-  .book .title { font-size: 18px; font-weight: 600; line-height: 1.2; }
-  .book .author { margin-top: 2px; font-size: 15px; color: var(--soft); }
-  .pick { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-  .pick button, .places button { padding: 6px 12px; font-size: 15px; font-weight: 600; background: #fff; border: 2px solid var(--c); border-radius: 999px; }
-  .added { margin-top: 10px; font-weight: 600; color: var(--c); }
+  .empty { display: grid; justify-items: center; gap: 6px; padding: 56px 32px; text-align: center; }
+  .empty .ic { width: 52px; height: 52px; margin-bottom: 8px; color: var(--label2); }
+  .empty h2 { margin: 0; font-size: 22px; font-weight: 700; }
+  .empty p { max-width: 30ch; margin: 0 0 12px; color: var(--label2); }
+  .pill { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 20px; border-radius: 999px;
+    font-weight: 600; color: var(--on-tint); background: var(--tint); }
+  .pill:active { transform: scale(.97); opacity: .9; }
 
-  /* One book: bottom sheet, banded in its list colour. */
-  #sheet { width: 100%; max-width: 560px; margin: auto auto 0; overflow: hidden; border-radius: 14px 14px 0 0; padding-bottom: calc(18px + env(safe-area-inset-bottom)); }
-  #sheet[open] { animation: up .28s cubic-bezier(.2, .8, .3, 1); }
-  @keyframes up { from { transform: translateY(100%); } }
-  #sheet .band { height: 14px; background: var(--c); }
-  .sheet-body { display: grid; grid-template-columns: 96px 1fr; gap: 6px 18px; padding: 20px 20px 0; }
-  .sheet-body .thumb { grid-row: span 3; }
-  .sheet-body h2 { margin: 0; font-size: 22px; font-weight: 700; line-height: 1.15; }
-  .sheet-body .author { color: var(--soft); }
-  .check { display: flex; align-items: center; gap: 10px; font-weight: 600; }
-  input[type=checkbox] { flex: none; width: 26px; height: 26px; margin: 0; border: 2px solid #bdbdb8; border-radius: 7px; -webkit-appearance: none; appearance: none; }
-  input[type=checkbox]:checked { background: var(--c) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 12.5l4 4 8-9' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/100%; border-color: var(--c); animation: pop .25s ease-out; }
-  @keyframes pop { 50% { transform: scale(.8); } }
-  .stars { grid-column: 1 / -1; display: flex; justify-content: center; gap: 4px; padding-top: 14px; }
-  .stars button { padding: 0 4px; font-size: 36px; line-height: 1; color: var(--c); background: none; border: 0; }
-  .places { grid-column: 1 / -1; display: flex; gap: 8px; padding-top: 18px; }
-  .places button { flex: 1; padding: 10px 0; }
-  .places button.on { color: #fff; background: var(--c); }
-  .sheet-foot { grid-column: 1 / -1; display: flex; justify-content: space-between; padding-top: 16px; }
-  .sheet-foot .remove { color: #b3261e; font-weight: 400; }
+  /* Tab bar: a floating capsule over the grid, with Add set apart under the thumb. */
+  .dock { position: fixed; z-index: 3; left: 12px; right: 12px; bottom: calc(env(safe-area-inset-bottom) + 6px); max-width: 560px; margin: 0 auto; display: flex; gap: 10px; }
+  .tabs { flex: 1; display: flex; height: 64px; padding: 4px; border-radius: 999px; box-shadow: 0 10px 30px var(--lift), inset 0 0 0 .5px var(--rim); }
+  .tabs button { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    border-radius: 999px; font-size: 11px; font-weight: 600; transition: background-color .2s, color .2s; }
+  .tabs button .ic { width: 25px; height: 25px; }
+  .tabs button[aria-selected=true] { color: var(--tint); background: var(--fill); }
+  .tabs button:active { background: var(--fill-strong); }
+  .addbtn { flex: none; display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; color: var(--on-tint); background: var(--tint);
+    box-shadow: 0 10px 26px var(--lift), inset 0 0 0 .5px var(--rim); transition: transform .15s ease-out; }
+  .addbtn .ic { width: 28px; height: 28px; }
+  .addbtn:active { transform: scale(.92); }
 
-  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+  .menu { inset: auto 12px auto auto; top: calc(env(safe-area-inset-top) + 48px); margin: 0; min-width: 230px; border: 0; border-radius: 14px;
+    padding: 4px 0; color: var(--label); box-shadow: 0 16px 40px var(--lift), inset 0 0 0 .5px var(--rim); overflow: hidden; }
+  .menu button, .menu label { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; min-height: 46px; padding: 0 16px; cursor: pointer; }
+  .menu > * + * { box-shadow: inset 0 .5px 0 var(--sep); }
+  .menu :active { background: var(--fill); }
+  .menu input { position: absolute; width: 0; opacity: 0; }
+
+  /* Sheets rise from the bottom and drag down to dismiss. */
+  .sheet { position: fixed; inset: auto 0 0 0; width: 100%; max-width: 600px; max-height: calc(100dvh - env(safe-area-inset-top) - 10px); margin: 0 auto;
+    padding: 0 16px calc(16px + env(safe-area-inset-bottom)); border: 0; border-radius: 22px 22px 0 0; color: var(--label); background: var(--sheet);
+    overflow: auto; overscroll-behavior: contain; transition: transform .26s cubic-bezier(.3, .8, .25, 1); }
+  .sheet::backdrop { background: rgba(0, 0, 0, .35); }
+  .sheet[open]:not([data-vt]) { animation: rise .28s cubic-bezier(.2, .9, .25, 1); }
+  @keyframes rise { from { transform: translateY(100%); } }
+  .sheet-head, .book-head { touch-action: none; }
+  .grab { position: sticky; top: 0; z-index: 1; height: 22px; margin: 0 -16px; touch-action: none; cursor: grab; background: var(--sheet); }
+  .grab::before { content: ''; position: absolute; top: 7px; left: 50%; width: 36px; height: 5px; margin-left: -18px; border-radius: 3px; background: var(--fill-strong); }
+  .close { position: absolute; top: 14px; right: 14px; z-index: 2; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; color: var(--label2); background: var(--fill); }
+  .close .ic { width: 15px; height: 15px; }
+
+  .book-head { display: grid; grid-template-columns: 112px 1fr; gap: 16px; align-items: end; padding: 10px 40px 20px 0; }
+  .book-head .cover { aspect-ratio: 2 / 3; border-radius: 4px; box-shadow: 0 10px 24px var(--lift); }
+  .book-head .art b { font-size: 13px; }
+  .book-head h2 { margin: 0; font-size: 22px; font-weight: 700; line-height: 1.2; overflow-wrap: anywhere; }
+  .book-head .author { margin: 4px 0 0; color: var(--label2); }
+  .group { margin-bottom: 16px; border-radius: 12px; background: var(--group); overflow: hidden; }
+  .rate { display: flex; justify-content: center; gap: 6px; padding: 8px 0; }
+  .rate button { display: grid; place-items: center; width: 50px; height: 50px; color: var(--tint); }
+  .rate .ic { width: 36px; height: 36px; }
+  .rate button.pop .ic { animation: pop .18s cubic-bezier(.3, 1.6, .5, 1) backwards; animation-delay: calc(var(--i) * 20ms); }
+  @keyframes pop { from { transform: scale(.55); } }
+  .seg { display: flex; gap: 2px; margin-bottom: 16px; padding: 2px; border-radius: 10px; background: var(--fill); }
+  .seg button { flex: 1; min-height: 34px; border-radius: 8px; font-size: 14px; font-weight: 500; transition: background-color .2s; }
+  .seg button[aria-checked=true] { font-weight: 600; background: var(--seg-on); box-shadow: 0 2px 6px rgba(0, 0, 0, .12), inset 0 0 0 .5px var(--rim); }
+  .remove { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 50px; border-radius: 12px; color: var(--danger); background: var(--group); }
+  .remove:active { background: var(--fill); }
+
+  .tall[open] { display: flex; flex-direction: column; }
+  .tall { height: calc(100dvh - env(safe-area-inset-top) - 10px); overflow: hidden; padding-bottom: 0; }
+  .sheet-head { display: flex; align-items: center; justify-content: space-between; padding: 0 0 12px; }
+  .sheet-head h2 { margin: 0; font-size: 22px; font-weight: 700; }
+  .text-btn { min-height: 44px; padding: 0 4px; font-weight: 600; color: var(--tint); }
+  .add-to { margin: 0 0 12px; }
+  .add-to .seg { margin: 0; }
+  #msg { margin: 12px 4px 4px; font-size: 15px; color: var(--label2); }
+  .rows { flex: 1; overflow: auto; overscroll-behavior: contain; list-style: none; margin: 0 -16px; padding: 0 16px 8px; }
+  .row { display: grid; grid-template-columns: 44px 1fr 44px; gap: 12px; align-items: center; padding: 8px 0; box-shadow: inset 0 -.5px 0 var(--sep); }
+  .row .cover { width: 44px; aspect-ratio: 2 / 3; border-radius: 4px; }
+  .row .art { padding: 3px; }
+  .row .art b { display: none; }
+  .row .art small { display: none; }
+  .row .t { display: -webkit-box; overflow: hidden; font-weight: 600; line-height: 1.2; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .row .a { margin-top: 2px; overflow: hidden; font-size: 15px; color: var(--label2); white-space: nowrap; text-overflow: ellipsis; }
+  .addone { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; color: var(--tint); }
+  .addone .ic { width: 30px; height: 30px; padding: 6px; border-radius: 50%; background: var(--fill); }
+  .addone:disabled { cursor: default; }
+  .addone:disabled .ic { color: var(--on-tint); background: var(--tint); }
+  .skel .cover, .skel i { background: var(--fill); animation: breathe 1.2s ease-in-out infinite alternate; }
+  .skel i { display: block; height: 12px; margin: 6px 0; border-radius: 6px; }
+  @keyframes breathe { to { opacity: .45; } }
+  .scan { flex: none; margin: 0 -16px; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); box-shadow: 0 -.5px 0 var(--sep); }
+  .scan label { width: 100%; min-height: 54px; font-size: 17px; }
+  .scan label[aria-busy=true] { opacity: .6; pointer-events: none; }
+  .scan input { position: absolute; width: 0; opacity: 0; }
+
+  ::view-transition-group(lift) { animation-duration: .3s; animation-timing-function: cubic-bezier(.2, .9, .25, 1); }
+  ::view-transition-old(root), ::view-transition-new(root) { animation-duration: .22s; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+    ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+  }
 </style>
 </head>
-<body data-tab="shelf">
-<header class="cover-head">
-  <div class="band top"><span class="cartouche">Bookshelf</span></div>
-  <div class="panel">
-    <h1 id="title">Shelf</h1>
-    <p id="count"></p>
-  </div>
-  <div class="band bottom"></div>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <!-- Phosphor Icons 2.1.1 (MIT), paths copied from @phosphor-icons/core -->
+  <symbol id="books" viewBox="0 0 256 256"><path d="M231.65,194.55,198.46,36.75a16,16,0,0,0-19-12.39L132.65,34.42a16.08,16.08,0,0,0-12.3,19l33.19,157.8A16,16,0,0,0,169.16,224a16.25,16.25,0,0,0,3.38-.36l46.81-10.06A16.09,16.09,0,0,0,231.65,194.55ZM136,50.15c0-.06,0-.09,0-.09l46.8-10,3.33,15.87L139.33,66Zm6.62,31.47,46.82-10.05,3.34,15.9L146,97.53Zm6.64,31.57,46.82-10.06,13.3,63.24-46.82,10.06ZM216,197.94l-46.8,10-3.33-15.87L212.67,182,216,197.85C216,197.91,216,197.94,216,197.94ZM104,32H56A16,16,0,0,0,40,48V208a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V48A16,16,0,0,0,104,32ZM56,48h48V64H56Zm0,32h48v96H56Zm48,128H56V192h48v16Z"/></symbol>
+  <symbol id="books-fill" viewBox="0 0 256 256"><path d="M231.65,194.55,198.46,36.75a16,16,0,0,0-19-12.39L132.65,34.42a16.08,16.08,0,0,0-12.3,19l33.19,157.8A16,16,0,0,0,169.16,224a16.25,16.25,0,0,0,3.38-.36l46.81-10.06A16.09,16.09,0,0,0,231.65,194.55ZM136,50.15c0-.06,0-.09,0-.09l46.8-10,3.33,15.87L139.33,66Zm10,47.38-3.35-15.9,46.82-10.06,3.34,15.9Zm70,100.41-46.8,10-3.33-15.87L212.67,182,216,197.85C216,197.91,216,197.94,216,197.94ZM104,32H56A16,16,0,0,0,40,48V208a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V48A16,16,0,0,0,104,32ZM56,48h48V64H56Zm48,160H56V192h48v16Z"/></symbol>
+  <symbol id="next" viewBox="0 0 256 256"><path d="M184,32H72A16,16,0,0,0,56,48V224a8,8,0,0,0,12.24,6.78L128,193.43l59.77,37.35A8,8,0,0,0,200,224V48A16,16,0,0,0,184,32Zm0,177.57-51.77-32.35a8,8,0,0,0-8.48,0L72,209.57V48H184Z"/></symbol>
+  <symbol id="next-fill" viewBox="0 0 256 256"><path d="M184,32H72A16,16,0,0,0,56,48V224a8,8,0,0,0,12.24,6.78L128,193.43l59.77,37.35A8,8,0,0,0,200,224V48A16,16,0,0,0,184,32Z"/></symbol>
+  <symbol id="wish" viewBox="0 0 256 256"><path d="M178,40c-20.65,0-38.73,8.88-50,23.89C116.73,48.88,98.65,40,78,40a62.07,62.07,0,0,0-62,62c0,70,103.79,126.66,108.21,129a8,8,0,0,0,7.58,0C136.21,228.66,240,172,240,102A62.07,62.07,0,0,0,178,40ZM128,214.8C109.74,204.16,32,155.69,32,102A46.06,46.06,0,0,1,78,56c19.45,0,35.78,10.36,42.6,27a8,8,0,0,0,14.8,0c6.82-16.67,23.15-27,42.6-27a46.06,46.06,0,0,1,46,46C224,155.61,146.24,204.15,128,214.8Z"/></symbol>
+  <symbol id="wish-fill" viewBox="0 0 256 256"><path d="M240,102c0,70-103.79,126.66-108.21,129a8,8,0,0,1-7.58,0C119.79,228.66,16,172,16,102A62.07,62.07,0,0,1,78,40c20.65,0,38.73,8.88,50,23.89C139.27,48.88,157.35,40,178,40A62.07,62.07,0,0,1,240,102Z"/></symbol>
+  <symbol id="read" viewBox="0 0 256 256"><path d="M173.66,98.34a8,8,0,0,1,0,11.32l-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35A8,8,0,0,1,173.66,98.34ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/></symbol>
+  <symbol id="read-fill" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm45.66,85.66-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32Z"/></symbol>
+  <symbol id="plus" viewBox="0 0 256 256"><path d="M228,128a12,12,0,0,1-12,12H140v76a12,12,0,0,1-24,0V140H40a12,12,0,0,1,0-24h76V40a12,12,0,0,1,24,0v76h76A12,12,0,0,1,228,128Z"/></symbol>
+  <symbol id="check" viewBox="0 0 256 256"><path d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></symbol>
+  <symbol id="x" viewBox="0 0 256 256"><path d="M208.49,191.51a12,12,0,0,1-17,17L128,145,64.49,208.49a12,12,0,0,1-17-17L111,128,47.51,64.49a12,12,0,0,1,17-17L128,111l63.51-63.52a12,12,0,0,1,17,17L145,128Z"/></symbol>
+  <symbol id="dots" viewBox="0 0 256 256"><path d="M144,128a16,16,0,1,1-16-16A16,16,0,0,1,144,128ZM60,112a16,16,0,1,0,16,16A16,16,0,0,0,60,112Zm136,0a16,16,0,1,0,16,16A16,16,0,0,0,196,112Z"/></symbol>
+  <symbol id="search" viewBox="0 0 256 256"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></symbol>
+  <symbol id="barcode" viewBox="0 0 256 256"><path d="M232,48V88a8,8,0,0,1-16,0V56H184a8,8,0,0,1,0-16h40A8,8,0,0,1,232,48ZM72,200H40V168a8,8,0,0,0-16,0v40a8,8,0,0,0,8,8H72a8,8,0,0,0,0-16Zm152-40a8,8,0,0,0-8,8v32H184a8,8,0,0,0,0,16h40a8,8,0,0,0,8-8V168A8,8,0,0,0,224,160ZM32,96a8,8,0,0,0,8-8V56H72a8,8,0,0,0,0-16H32a8,8,0,0,0-8,8V88A8,8,0,0,0,32,96ZM80,80a8,8,0,0,0-8,8v80a8,8,0,0,0,16,0V88A8,8,0,0,0,80,80Zm104,88V88a8,8,0,0,0-16,0v80a8,8,0,0,0,16,0ZM144,80a8,8,0,0,0-8,8v80a8,8,0,0,0,16,0V88A8,8,0,0,0,144,80Zm-32,0a8,8,0,0,0-8,8v80a8,8,0,0,0,16,0V88A8,8,0,0,0,112,80Z"/></symbol>
+  <symbol id="star" viewBox="0 0 256 256"><path d="M239.18,97.26A16.38,16.38,0,0,0,224.92,86l-59-4.76L143.14,26.15a16.36,16.36,0,0,0-30.27,0L90.11,81.23,31.08,86a16.46,16.46,0,0,0-9.37,28.86l45,38.83L53,211.75a16.38,16.38,0,0,0,24.5,17.82L128,198.49l50.53,31.08A16.4,16.4,0,0,0,203,211.75l-13.76-58.07,45-38.83A16.43,16.43,0,0,0,239.18,97.26Zm-15.34,5.47-48.7,42a8,8,0,0,0-2.56,7.91l14.88,62.8a.37.37,0,0,1-.17.48c-.18.14-.23.11-.38,0l-54.72-33.65a8,8,0,0,0-8.38,0L69.09,215.94c-.15.09-.19.12-.38,0a.37.37,0,0,1-.17-.48l14.88-62.8a8,8,0,0,0-2.56-7.91l-48.7-42c-.12-.1-.23-.19-.13-.5s.18-.27.33-.29l63.92-5.16A8,8,0,0,0,103,91.86l24.62-59.61c.08-.17.11-.25.35-.25s.27.08.35.25L153,91.86a8,8,0,0,0,6.75,4.92l63.92,5.16c.15,0,.24,0,.33.29S224,102.63,223.84,102.73Z"/></symbol>
+  <symbol id="star-fill" viewBox="0 0 256 256"><path d="M234.29,114.85l-45,38.83L203,211.75a16.4,16.4,0,0,1-24.5,17.82L128,198.49,77.47,229.57A16.4,16.4,0,0,1,53,211.75l13.76-58.07-45-38.83A16.46,16.46,0,0,1,31.08,86l59-4.76,22.76-55.08a16.36,16.36,0,0,1,30.27,0l22.75,55.08,59,4.76a16.46,16.46,0,0,1,9.37,28.86Z"/></symbol>
+  <symbol id="trash" viewBox="0 0 256 256"><path d="M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192ZM112,104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z"/></symbol>
+  <symbol id="export" viewBox="0 0 256 256"><path d="M216,112v96a16,16,0,0,1-16,16H56a16,16,0,0,1-16-16V112A16,16,0,0,1,56,96H80a8,8,0,0,1,0,16H56v96H200V112H176a8,8,0,0,1,0-16h24A16,16,0,0,1,216,112ZM93.66,69.66,120,43.31V136a8,8,0,0,0,16,0V43.31l26.34,26.35a8,8,0,0,0,11.32-11.32l-40-40a8,8,0,0,0-11.32,0l-40,40A8,8,0,0,0,93.66,69.66Z"/></symbol>
+  <symbol id="restore" viewBox="0 0 256 256"><path d="M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z"/></symbol>
+</svg>
+
+<header class="topbar">
+  <span id="miniTitle" aria-hidden="true">Library</span>
+  <button class="navbtn" popovertarget="menu" aria-label="Backup options"><svg class="ic"><use href="#dots"/></svg></button>
 </header>
-<div class="bar">
-  <input type="search" id="q" placeholder="Search my books">
-  <button id="add" class="solid">Add</button>
+
+<main>
+  <div class="head">
+    <h1 id="title">Library</h1>
+    <p id="count" class="count"></p>
+    <label class="search"><svg class="ic" aria-hidden="true"><use href="#search"/></svg><span class="visually-hidden">Search my books</span>
+      <input type="search" id="q" placeholder="Title or author" autocomplete="off"></label>
+  </div>
+  <ul id="list" class="grid"></ul>
+  <div id="empty" class="empty" hidden>
+    <svg class="ic" aria-hidden="true"><use id="emptyIcon" href="#books"/></svg>
+    <h2 id="emptyTitle"></h2>
+    <p id="emptyText"></p>
+    <button id="emptyAdd" class="pill"><svg class="ic" aria-hidden="true"><use href="#plus"/></svg>Add a Book</button>
+  </div>
+</main>
+
+<div id="menu" class="menu glass" popover>
+  <button id="export">Save Backup<svg class="ic" aria-hidden="true"><use href="#export"/></svg></button>
+  <label>Restore from Backup<svg class="ic" aria-hidden="true"><use href="#restore"/></svg><input id="import" type="file" accept="application/json,.json"></label>
 </div>
-<ul id="list"></ul>
-<footer>
-  <button id="export">Save a backup</button>
-  <label>Restore from backup<input id="import" type="file" accept="application/json,.json"></label>
-</footer>
-<nav id="tabs">
-  <button data-tab="shelf" class="on">Shelf</button>
-  <button data-tab="next">Read next</button>
-  <button data-tab="wish">Wishlist</button>
-  <button data-tab="read">Read</button>
+
+<nav class="dock">
+  <div id="tabs" class="tabs glass" role="tablist" aria-label="Lists">
+    <button role="tab" data-tab="shelf" aria-selected="true"><svg class="ic" aria-hidden="true"><use href="#books-fill"/></svg>Library</button>
+    <button role="tab" data-tab="next" aria-selected="false"><svg class="ic" aria-hidden="true"><use href="#next"/></svg>Up Next</button>
+    <button role="tab" data-tab="wish" aria-selected="false"><svg class="ic" aria-hidden="true"><use href="#wish"/></svg>Wishlist</button>
+    <button role="tab" data-tab="read" aria-selected="false"><svg class="ic" aria-hidden="true"><use href="#read"/></svg>Finished</button>
+  </div>
+  <button id="add" class="addbtn" aria-label="Add a book"><svg class="ic" aria-hidden="true"><use href="#plus"/></svg></button>
 </nav>
 
-<dialog id="sheet"><div class="band"></div><div class="sheet-body" id="sheetBody"></div></dialog>
+<dialog id="sheet" class="sheet" aria-labelledby="sheetTitle">
+  <div class="grab" aria-hidden="true"></div>
+  <button class="close" data-done aria-label="Close"><svg class="ic" aria-hidden="true"><use href="#x"/></svg></button>
+  <div id="sheetBody"></div>
+</dialog>
 
-<dialog id="dlg">
-  <div class="band"></div>
-  <div class="dhead">
-    <h2>Add a book</h2>
+<dialog id="dlg" class="sheet tall" aria-labelledby="addTitle">
+  <div class="grab" aria-hidden="true"></div>
+  <div class="sheet-head">
+    <h2 id="addTitle">Add Books</h2>
     <button id="close" class="text-btn">Done</button>
   </div>
-  <form id="find" class="bar">
-    <input type="search" id="q2" placeholder="Title, author or ISBN" enterkeyhint="search">
-    <label class="solid">Scan barcode<input id="photo" type="file" accept="image/*" capture="environment"></label>
-  </form>
-  <p id="msg">Search by title, author or ISBN, or scan the barcode on the back cover.</p>
-  <ul id="results"></ul>
+  <div class="add-to"><div id="addTo" class="seg" role="radiogroup" aria-label="Add to"></div></div>
+  <form id="find" class="search" role="search"><svg class="ic" aria-hidden="true"><use href="#search"/></svg>
+    <input type="search" id="q2" placeholder="Title, author or ISBN" enterkeyhint="search" autocomplete="off" aria-label="Search Open Library"></form>
+  <p id="msg" aria-live="polite">Search Open Library, or scan the barcode on the back cover.</p>
+  <ul id="results" class="rows"></ul>
+  <div class="scan">
+    <label class="pill" id="scanBtn"><svg class="ic" aria-hidden="true"><use href="#barcode"/></svg><span>Scan Barcode</span>
+      <input id="photo" type="file" accept="image/*" capture="environment"></label>
+  </div>
 </dialog>
 
 <script>
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
+const reduced = matchMedia('(prefers-reduced-motion: reduce)');
 let books = JSON.parse(localStorage.books || '[]');
 let tab = 'shelf';
+let addTo = 'shelf';
 let found = [];
 let current = null;
 
-const tabs = {
-  shelf: ['Shelf', 'on the shelf', 'Your shelf is empty. Tap Add to find a book by its title or the barcode on the back.'],
-  next: ['Read next', 'lined up', 'Nothing lined up. Open any book and choose Read next to queue it here.'],
-  wish: ['Wishlist', 'wanted', 'No wishes yet. Tap Add, find a book, and choose Wishlist.'],
-  read: ['Read', 'finished', "Open a book and tick I've read this. It lands here with your stars."],
+const TABS = {
+  shelf: ['Library', 'books', 'Your library is empty', 'Tap + to scan a barcode or search for a book.'],
+  next: ['Up Next', 'next', 'Nothing up next', 'Open any book and choose Up Next to line it up here.'],
+  wish: ['Wishlist', 'wish', 'Your wishlist is empty', 'In Add Books, choose Wishlist before you add.'],
+  read: ['Finished', 'read', 'No finished books yet', 'Open a book and choose Finished to rate it.'],
 };
-const places = [['shelf', 'Shelf'], ['next', 'Read next'], ['wish', 'Wishlist']];
-const plural = (n, word) => `${n || 'No'} ${word}${n === 1 ? '' : word.endsWith('h') ? 'es' : 's'}`;
-const hue = status => `style="--c:var(--${status})"`;
+const PLACES = [['shelf', 'Library'], ['next', 'Up Next'], ['wish', 'Wishlist']];
+const CLOTH = ['#2e4a7d', '#7a2e3b', '#8a5a1f', '#4b3f72', '#6b4e3d', '#8c3b5e', '#35495e', '#9a4a2f', '#3a3f47', '#5c2f55'];
+const ic = id => `<svg class="ic" aria-hidden="true"><use href="#${id}"/></svg>`;
+const plural = (n, word) => `${n || 'No'} ${word}${n === 1 ? '' : 's'}`;
+const keyOf = b => `${b.title}|${b.author}`.toLowerCase();
 
 function save() { localStorage.books = JSON.stringify(books); render(); }
 
-function thumb(b) {
-  return b.cover ? `<span class="thumb"><img src="${esc(b.cover)}" alt="" loading="lazy"></span>` : `<span class="thumb blank">${esc(b.title)}</span>`;
+// Every cover carries a cloth binding underneath; the real image fades in over it when it loads.
+function cover(b, attr = '') {
+  const hash = [...String(b.title)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
+  const img = b.cover ? `<img src="${esc(b.cover)}" alt="" loading="lazy" onload="this.naturalWidth > 10 ? this.classList.add('in') : this.remove()" onerror="this.remove()">` : '';
+  return `<span class="cover" ${attr}><span class="art" style="--cloth:${CLOTH[hash % CLOTH.length]}"><b>${esc(b.title)}</b><small>${esc(b.author)}</small></span>${img}</span>`;
 }
 
 function visible(books, tab, q) {
@@ -193,84 +310,147 @@ function visible(books, tab, q) {
 function render() {
   const q = $('#q').value.trim();
   const shown = visible(books, tab, q);
-  const [name, verb, empty] = tabs[tab];
-  document.body.dataset.tab = tab;
-  $('#title').textContent = q ? 'Search' : name;
-  $('#count').textContent = q ? `${plural(shown.length, 'match')} in all your books` : `${plural(shown.length, 'book')} ${verb}`;
-  $('#list').classList.toggle('numbered', tab === 'next' && !q);
-  $('#list').innerHTML = shown.map(b => `<li><button class="tile" data-id="${esc(b.id)}" ${hue(b.status)}>
-    ${thumb(b)}<span class="t">${esc(b.title)}</span><span class="a">${esc(b.author)}</span>
-    ${b.status === 'read' && b.rating ? `<span class="mini" aria-label="${b.rating} stars">${'★'.repeat(b.rating)}</span>` : ''}
-  </button></li>`).join('') || `<li class="empty">${q ? 'No books match that search.' : empty}</li>`;
+  const queue = books.filter(b => b.status === 'next').map(b => b.id);
+  const [name, icon, emptyTitle, emptyText] = TABS[tab];
+  $('#title').textContent = $('#miniTitle').textContent = name;
+  $('#count').textContent = q ? `${plural(shown.length, 'match')} for “${q}”` : plural(shown.length, 'book');
+  $('#list').innerHTML = shown.map(b => {
+    const n = queue.indexOf(b.id) + 1;
+    const mark = b.status === 'next' ? `<span class="ribbon">${n}</span>`
+      : b.status === 'read' ? `<span class="badge">${b.rating ? ic('star-fill') + b.rating : ic('check')}</span>`
+      : b.status === 'wish' ? `<span class="badge">${ic('wish-fill')}</span>` : '';
+    const state = { next: `, up next number ${n}`, read: `, finished${b.rating ? `, ${b.rating} stars` : ''}`, wish: ', on wishlist' }[b.status] || '';
+    return `<li><button class="tile" data-id="${esc(b.id)}" aria-label="${esc(`${b.title} by ${b.author || 'unknown author'}${state}`)}">${cover(b)}${mark}</button></li>`;
+  }).join('');
+  $('#empty').hidden = shown.length > 0;
+  $('#emptyIcon').setAttribute('href', q ? '#search' : `#${icon}`);
+  $('#emptyTitle').textContent = q ? 'No matches' : emptyTitle;
+  $('#emptyText').textContent = q ? 'Check the spelling, or add it with the + button.' : emptyText;
+  $('#emptyAdd').hidden = !!q || tab === 'next' || tab === 'read';
 }
 
-function renderSheet() {
-  const b = books.find(b => b.id === current);
-  $('#sheet').setAttribute('style', `--c:var(--${b.status})`);
-  $('#sheetBody').innerHTML = `${thumb(b)}
-    <h2>${esc(b.title)}</h2>
-    <div class="author">${esc(b.author)}</div>
-    <label class="check"><input type="checkbox" ${b.status === 'read' ? 'checked' : ''}> I've read this</label>
-    ${b.status === 'read' ? `<div class="stars">${[1, 2, 3, 4, 5].map(n => `<button data-rate="${n}" aria-label="${n} stars">${n <= b.rating ? '★' : '☆'}</button>`).join('')}</div>` : ''}
-    <div class="places">${places.map(([v, l]) => `<button data-place="${v}" ${hue(v)} class="${b.status === v ? 'on' : ''}">${l}</button>`).join('')}</div>
-    <div class="sheet-foot"><button class="text-btn remove" data-remove>Remove book</button><button class="text-btn" data-done>Done</button></div>`;
-}
-
-$('#list').onclick = e => {
-  const tile = e.target.closest('.tile');
-  if (!tile) return;
-  current = tile.dataset.id;
-  renderSheet();
-  $('#sheet').showModal();
-};
-
-// In the sheet: tick marks read (stars appear), list buttons move it, and Remove deletes it.
-$('#sheet').onchange = e => {
-  books.find(b => b.id === current).status = e.target.checked ? 'read' : 'shelf';
-  setTimeout(() => { save(); renderSheet(); }, 200); // let the tick land first
-};
-$('#sheet').onclick = e => {
-  if (e.target === $('#sheet')) return $('#sheet').close(); // tap on the dimmed backdrop
-  const btn = e.target.closest('button');
-  if (!btn) return;
-  const b = books.find(b => b.id === current);
-  if (btn.dataset.done !== undefined) return $('#sheet').close();
-  if (btn.dataset.rate) b.rating = +btn.dataset.rate;
-  if (btn.dataset.place) b.status = btn.dataset.place;
-  if (btn.dataset.remove !== undefined) {
-    if (!confirm(`Remove “${b.title}” from your books?`)) return;
-    books = books.filter(x => x !== b);
-    $('#sheet').close();
-    return save();
-  }
-  save();
-  renderSheet();
-};
-
-$('#q').oninput = render;
+// Tabs
 $('#tabs').onclick = e => {
-  if (!e.target.dataset.tab) return;
-  tab = e.target.dataset.tab;
+  const btn = e.target.closest('[data-tab]');
+  if (!btn) return;
+  tab = btn.dataset.tab;
   $('#q').value = '';
-  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b === e.target));
+  for (const b of $('#tabs').children) {
+    const on = b === btn;
+    b.setAttribute('aria-selected', on);
+    b.querySelector('use').setAttribute('href', `#${TABS[b.dataset.tab][1]}${on ? '-fill' : ''}`);
+  }
   render();
   scrollTo(0, 0);
 };
+$('#q').oninput = render;
+
+// Small title in the navigation bar once the large title scrolls under it.
+new IntersectionObserver(([e]) => document.body.classList.toggle('scrolled', !e.isIntersecting),
+  { rootMargin: `-${$('.topbar').offsetHeight}px 0px 0px 0px` }).observe($('#title'));
+$('.topbar').classList.add('glass');
+
+// Sheets: open with a rise, close by button, backdrop, Escape, or dragging the grabber down.
+function closeSheet(d) {
+  if (!d.open) return;
+  if (reduced.matches) return d.close();
+  d.style.transform = 'translateY(100%)';
+  setTimeout(() => { d.close(); d.style.transform = ''; }, 260);
+}
+for (const d of [$('#sheet'), $('#dlg')]) {
+  let y0 = null, dy = 0, dragged = false;
+  d.addEventListener('pointerdown', e => {
+    if (!e.target.closest('.grab, .sheet-head, .book-head')) return;
+    y0 = e.clientY; dy = 0; dragged = false; d.style.transition = 'none';
+  });
+  d.addEventListener('pointermove', e => {
+    if (y0 === null) return;
+    dy = Math.max(0, e.clientY - y0);
+    if (dy > 4 && !dragged) { dragged = true; d.setPointerCapture(e.pointerId); } // capture only a real drag, so taps still reach buttons
+    if (dragged) d.style.transform = `translateY(${dy}px)`;
+  });
+  const end = () => {
+    if (y0 === null) return;
+    y0 = null; d.style.transition = '';
+    if (dy > 110) closeSheet(d); else d.style.transform = '';
+  };
+  d.addEventListener('pointerup', end);
+  d.addEventListener('pointercancel', end);
+  d.addEventListener('click', e => {
+    if (dragged) { dragged = false; return; } // the click that ends a drag is not a backdrop tap
+    if (e.target === d) closeSheet(d);
+  });
+  d.addEventListener('close', () => { delete d.dataset.vt; d.style.transform = ''; if (d.id === 'dlg') render(); });
+}
+
+// One book: the tapped cover lifts out of the grid into the sheet.
+function openBook(tile) {
+  current = tile.dataset.id;
+  const sheet = $('#sheet');
+  const show = () => { tile.querySelector('.cover').style.viewTransitionName = ''; renderSheet(); sheet.showModal(); };
+  if (!document.startViewTransition || reduced.matches) return show();
+  tile.querySelector('.cover').style.viewTransitionName = 'lift';
+  sheet.dataset.vt = '1';
+  document.startViewTransition(show);
+}
+$('#list').onclick = e => { const tile = e.target.closest('.tile'); if (tile) openBook(tile); };
+
+function renderSheet(popFrom = 0) {
+  const b = books.find(b => b.id === current);
+  if (!b) return closeSheet($('#sheet'));
+  // One control for the book's four states, so something is always selected; stars appear under Finished.
+  $('#sheetBody').innerHTML = `
+    <div class="book-head">${cover(b, 'style="view-transition-name:lift"')}
+      <div><h2 id="sheetTitle">${esc(b.title)}</h2><p class="author">${esc(b.author)}</p></div></div>
+    <div class="seg" role="radiogroup" aria-label="List">${[...PLACES, ['read', 'Finished']].map(([v, l]) =>
+      `<button role="radio" aria-checked="${b.status === v}" data-place="${v}">${l}</button>`).join('')}</div>
+    ${b.status === 'read' ? `<div class="group rate" role="radiogroup" aria-label="Your rating">${[1, 2, 3, 4, 5].map(n =>
+      `<button role="radio" aria-checked="${b.rating === n}" aria-label="${n} star${n > 1 ? 's' : ''}" data-rate="${n}" style="--i:${n}" class="${popFrom && n <= popFrom ? 'pop' : ''}">${ic(n <= b.rating ? 'star-fill' : 'star')}</button>`).join('')}</div>` : ''}
+    <button class="remove" data-remove>${ic('trash')}Remove from Bookshelf</button>`;
+}
+
+$('#sheet').addEventListener('click', e => {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  if (btn.hasAttribute('data-done')) return closeSheet($('#sheet'));
+  const b = books.find(b => b.id === current);
+  let pop = 0;
+  if (btn.dataset.rate) pop = b.rating = +btn.dataset.rate;
+  else if (btn.dataset.place) b.status = btn.dataset.place;
+  else if (btn.hasAttribute('data-remove')) {
+    if (!confirm(`Remove “${b.title}” from your books?`)) return;
+    books = books.filter(x => x !== b);
+    closeSheet($('#sheet'));
+    return save();
+  } else return;
+  save();
+  renderSheet(pop);
+  $(`#sheetBody [data-${pop ? `rate="${pop}"` : `place="${b.status}"`}]`)?.focus();
+});
 
 // Adding books: Open Library search (free, no key) by text or ISBN.
-$('#add').onclick = () => $('#dlg').showModal();
-$('#close').onclick = () => { $('#dlg').close(); render(); };
+function renderAddTo() {
+  $('#addTo').innerHTML = PLACES.map(([v, l]) => `<button type="button" role="radio" aria-checked="${addTo === v}" data-to="${v}">${l}</button>`).join('');
+}
+function openAdd() {
+  addTo = tab === 'next' || tab === 'wish' ? tab : 'shelf';
+  renderAddTo();
+  $('#dlg').showModal();
+}
+$('#add').onclick = $('#emptyAdd').onclick = openAdd;
+$('#addTo').onclick = e => { const b = e.target.closest('[data-to]'); if (b) { addTo = b.dataset.to; renderAddTo(); drawResults(); } };
+$('#close').onclick = () => closeSheet($('#dlg'));
 $('#find').onsubmit = e => {
   e.preventDefault();
   const q = $('#q2').value.trim();
-  if (q) lookup(q);
+  if (q) { $('#q2').blur(); lookup(q); }
 };
 
 const getJSON = url => fetch(url).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); });
 
 async function lookup(q) {
   $('#msg').textContent = 'Searching Open Library…';
-  $('#results').innerHTML = '';
+  $('#results').innerHTML = '<li class="row skel"><span class="cover"></span><span><i style="width:70%"></i><i style="width:40%"></i></span></li>'.repeat(4);
   const isbn = /^[\d-]{10,17}x?$/i.test(q) && q.replace(/-/g, '');
   try {
     if (isbn) {
@@ -278,30 +458,41 @@ async function lookup(q) {
       const d = (await getJSON(`https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&jscmd=data&format=json`))[`ISBN:${isbn}`];
       found = d ? [{ title: d.title, author: (d.authors || []).map(a => a.name).join(', '), cover: d.cover?.medium || '' }] : [];
     } else {
-      found = (await getJSON(`https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=15&fields=title,author_name,cover_i`)).docs.map(d => ({
+      found = (await getJSON(`https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=20&fields=title,author_name,cover_i`)).docs.map(d => ({
         title: d.title,
         author: (d.author_name || []).join(', '),
         cover: d.cover_i ? `https://covers.openlibrary.org/b/id/${d.cover_i}-M.jpg` : '',
       }));
     }
-    $('#msg').textContent = found.length ? 'Choose where each book goes.'
+    $('#msg').textContent = found.length ? `Tap + to add to ${PLACES.find(p => p[0] === addTo)[1]}.`
       : isbn ? `Open Library doesn't have ISBN ${isbn}. Search by the title instead.` : 'No matches. Check the spelling, or try just the title.';
-    $('#results').innerHTML = found.map((b, i) => `<li class="book" data-i="${i}" ${hue('shelf')}>${thumb(b)}
-      <div><div class="title">${esc(b.title)}</div><div class="author">${esc(b.author)}</div>
-      <div class="pick">${places.map(([v, l]) => `<button data-s="${v}" ${hue(v)}>${l}</button>`).join('')}</div></div></li>`).join('');
+    drawResults();
   } catch {
+    $('#results').innerHTML = '';
     $('#msg').textContent = "Couldn't reach Open Library. Check your connection, then search again.";
   }
 }
 
+function drawResults() {
+  if (!found.length) return;
+  const have = new Set(books.map(keyOf));
+  const where = PLACES.find(p => p[0] === addTo)[1];
+  $('#results').innerHTML = found.map((b, i) => {
+    const owned = have.has(keyOf(b));
+    return `<li class="row">${cover(b)}<div><div class="t">${esc(b.title)}</div><div class="a">${esc(b.author)}</div></div>
+      <button class="addone" data-i="${i}" ${owned ? 'disabled' : ''} aria-label="${owned ? `${esc(b.title)} is already in your books` : `Add ${esc(b.title)} to ${where}`}">${ic(owned ? 'check' : 'plus')}</button></li>`;
+  }).join('');
+}
+
 $('#results').onclick = e => {
-  const s = e.target.dataset.s;
-  if (!s) return;
-  const li = e.target.closest('li');
-  books.push({ ...found[li.dataset.i], id: crypto.randomUUID(), status: s, rating: 0 });
+  const btn = e.target.closest('.addone');
+  if (!btn || btn.disabled) return;
+  const b = found[btn.dataset.i];
+  books.push({ ...b, id: crypto.randomUUID(), status: addTo, rating: 0 });
   save();
-  li.style.setProperty('--c', `var(--${s})`);
-  e.target.parentElement.outerHTML = `<div class="added">Added to ${e.target.textContent}</div>`;
+  btn.disabled = true;
+  btn.innerHTML = ic('check');
+  $('#msg').textContent = `Added “${b.title}” to ${PLACES.find(p => p[0] === addTo)[1]}.`;
 };
 
 // Photo of the back cover -> ISBN. Downscale first: a 12MP iPhone photo is slow to scan.
@@ -323,19 +514,26 @@ $('#photo').onchange = async e => {
   const file = e.target.files[0];
   e.target.value = '';
   if (!file) return;
+  const btn = $('#scanBtn');
+  btn.setAttribute('aria-busy', 'true');
+  btn.querySelector('span').textContent = 'Reading Barcode…';
   $('#msg').textContent = 'Reading the barcode…';
   $('#results').innerHTML = '';
   try {
     const isbn = await readBarcode(file);
     $('#q2').value = isbn;
-    lookup(isbn);
+    await lookup(isbn);
   } catch {
     $('#msg').textContent = "Couldn't find a barcode in that photo. Fill the frame with the barcode and try again, or type the title.";
+  } finally {
+    btn.removeAttribute('aria-busy');
+    btn.querySelector('span').textContent = 'Scan Barcode';
   }
 };
 
 // Books live only on this phone, so backups matter. Share sheet -> Save to Files.
 $('#export').onclick = () => {
+  $('#menu').hidePopover();
   const file = new File([JSON.stringify(books)], `bookshelf-${new Date().toISOString().slice(0, 10)}.json`, { type: 'application/json' });
   if (navigator.canShare?.({ files: [file] })) return navigator.share({ files: [file] }).catch(() => {});
   const a = document.createElement('a');
@@ -344,6 +542,7 @@ $('#export').onclick = () => {
   a.click();
 };
 $('#import').onchange = async e => {
+  $('#menu').hidePopover();
   const file = e.target.files[0];
   e.target.value = '';
   if (!file) return;
