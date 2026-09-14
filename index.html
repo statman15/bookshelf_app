@@ -73,7 +73,8 @@
   /* The library: one gapless grid of covers, nothing between her and the art. */
   .grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; }
   @media (min-width: 600px) { .grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); } }
-  .tile { position: relative; display: block; width: 100%; aspect-ratio: 2 / 3; overflow: hidden; -webkit-user-select: none; user-select: none; }
+  .tile { position: relative; display: block; width: 100%; aspect-ratio: 2 / 3; overflow: hidden; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  .tile img { pointer-events: none; -webkit-user-drag: none; }
   .tile .cover { position: absolute; inset: 0; transition: transform .15s ease-out, filter .15s; }
   .tile:active .cover { transform: scale(.96); filter: brightness(.9); }
 
@@ -139,6 +140,17 @@
   .book-head .art b { font-size: 13px; }
   .book-head h2 { margin: 0; font-size: 22px; font-weight: 700; line-height: 1.2; overflow-wrap: anywhere; }
   .book-head .author { margin: 4px 0 0; color: var(--label2); }
+  .book-head .meta { margin: 4px 0 0; font-size: 15px; color: var(--label2); font-variant-numeric: tabular-nums; }
+  .book-head .meta:empty { display: none; }
+
+  /* About This Book: Open Library's description, clamped with a fade until she asks for more. */
+  .about { padding: 14px 16px 6px; }
+  .about h3 { margin: 0 0 6px; font-size: 17px; font-weight: 600; }
+  .about p { max-width: 65ch; margin: 0 0 10px; font-size: 15px; line-height: 1.45; }
+  .about .clamp { max-height: calc(15px * 1.45 * 6); overflow: hidden; -webkit-mask-image: linear-gradient(#000 55%, transparent); mask-image: linear-gradient(#000 55%, transparent); }
+  .about .muted { color: var(--label2); }
+  .about .more, .about .link { display: inline-flex; align-items: center; min-height: 44px; margin-right: 20px; font-size: 15px; font-weight: 600; color: var(--tint); text-decoration: none; }
+  .about .skel { padding-bottom: 10px; }
   .group { margin-bottom: 16px; border-radius: 12px; background: var(--group); overflow: hidden; }
   .rate { display: flex; justify-content: center; gap: 6px; padding: 8px 0; }
   .rate button { display: grid; place-items: center; width: 50px; height: 50px; color: var(--tint); }
@@ -178,6 +190,22 @@
   .scan label { width: 100%; min-height: 54px; font-size: 17px; }
   .scan label[aria-busy=true] { opacity: .6; pointer-events: none; }
   .scan input { position: absolute; width: 0; opacity: 0; }
+
+  /* Long-press menu: the pressed cover lifts over a blurred page with its quick actions beneath. */
+  .ctx { width: 100%; height: 100%; max-width: none; max-height: none; margin: 0; padding: 0; border: 0; background: transparent; overflow: hidden; }
+  .ctx::backdrop { background: rgba(0, 0, 0, .28); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
+  .ctx-stack { position: absolute; display: flex; flex-direction: column; gap: 10px; }
+  .ctx[open] .ctx-stack { animation: ctxin .22s cubic-bezier(.2, .9, .25, 1); }
+  @keyframes ctxin { from { transform: scale(.94); opacity: 0; } }
+  .ctx-preview { padding: 0; }
+  .ctx-preview .cover { width: 100%; aspect-ratio: 2 / 3; border-radius: 8px; box-shadow: 0 18px 44px var(--lift); }
+  .ctx-menu { width: 250px; border-radius: 14px; overflow: hidden; color: var(--label); box-shadow: 0 18px 44px var(--lift), inset 0 0 0 .5px var(--rim); }
+  .ctx-menu button { display: grid; grid-template-columns: 18px 1fr 22px; align-items: center; gap: 10px; width: 100%; min-height: 46px; padding: 0 16px 0 12px; text-align: left; }
+  .ctx-menu button + button { box-shadow: inset 0 .5px 0 var(--sep); }
+  .ctx-menu button:active { background: var(--fill); }
+  .ctx-menu .tick .ic { width: 16px; height: 16px; }
+  .ctx-menu .gap { height: 8px; background: var(--fill); }
+  .ctx-menu .danger { color: var(--danger); }
 
   ::view-transition-group(lift) { animation-duration: .3s; animation-timing-function: cubic-bezier(.2, .9, .25, 1); }
   ::view-transition-old(root), ::view-transition-new(root) { animation-duration: .22s; }
@@ -253,6 +281,13 @@
   <div id="sheetBody"></div>
 </dialog>
 
+<dialog id="ctx" class="ctx" aria-label="Book actions">
+  <div id="ctxStack" class="ctx-stack">
+    <button id="ctxPreview" class="ctx-preview" aria-label="Open book"></button>
+    <div id="ctxMenu" class="ctx-menu glass" role="menu"></div>
+  </div>
+</dialog>
+
 <dialog id="dlg" class="sheet tall" aria-labelledby="addTitle">
   <div class="grab" aria-hidden="true"></div>
   <div class="sheet-head">
@@ -291,6 +326,8 @@ const CLOTH = ['#2e4a7d', '#7a2e3b', '#8a5a1f', '#4b3f72', '#6b4e3d', '#8c3b5e',
 const ic = id => `<svg class="ic" aria-hidden="true"><use href="#${id}"/></svg>`;
 const plural = (n, word) => `${n || 'No'} ${word}${n === 1 ? '' : 's'}`;
 const keyOf = b => `${b.title}|${b.author}`.toLowerCase();
+// crypto.randomUUID only exists on https (and newer iOS); the fallback keeps Add working anywhere.
+const newId = () => crypto.randomUUID?.() ?? Date.now().toString(36) + Math.random().toString(36).slice(2);
 
 function save() { localStorage.books = JSON.stringify(books); render(); }
 
@@ -384,16 +421,134 @@ for (const d of [$('#sheet'), $('#dlg')]) {
 }
 
 // One book: the tapped cover lifts out of the grid into the sheet.
+let expanded = false;
 function openBook(tile) {
   current = tile.dataset.id;
+  expanded = false;
   const sheet = $('#sheet');
-  const show = () => { tile.querySelector('.cover').style.viewTransitionName = ''; renderSheet(); sheet.showModal(); };
+  const show = () => { tile.querySelector('.cover').style.viewTransitionName = ''; renderSheet(); sheet.showModal(); loadDetails(current); };
   if (!document.startViewTransition || reduced.matches) return show();
   tile.querySelector('.cover').style.viewTransitionName = 'lift';
   sheet.dataset.vt = '1';
   document.startViewTransition(show);
 }
-$('#list').onclick = e => { const tile = e.target.closest('.tile'); if (tile) openBook(tile); };
+
+// Long-press (or right-click) a cover for quick actions without opening the sheet.
+let press = null;
+let ctxId = null;
+let ctxAt = 0;
+$('#list').addEventListener('pointerdown', e => {
+  const tile = e.target.closest('.tile');
+  if (!tile || e.button > 0) return;
+  press = { tile, x: e.clientX, y: e.clientY, fired: false };
+  press.timer = setTimeout(() => { press.fired = true; openCtx(tile); }, 450);
+});
+const cancelPress = () => { if (press && !press.fired) { clearTimeout(press.timer); press = null; } };
+$('#list').addEventListener('pointermove', e => { if (press && Math.hypot(e.clientX - press.x, e.clientY - press.y) > 10) cancelPress(); });
+$('#list').addEventListener('pointerup', cancelPress);
+$('#list').addEventListener('pointercancel', cancelPress);
+$('#list').addEventListener('contextmenu', e => {
+  const tile = e.target.closest('.tile');
+  if (!tile) return;
+  e.preventDefault();
+  if (!$('#ctx').open) openCtx(tile);
+});
+$('#list').onclick = e => {
+  const tile = e.target.closest('.tile');
+  if (!tile) return;
+  if (press?.fired) { press = null; return; } // the release that ended a long-press is not a tap
+  openBook(tile);
+};
+
+function openCtx(tile) {
+  const b = books.find(x => x.id === tile.dataset.id);
+  if (!b) return;
+  clearTimeout(press?.timer);
+  ctxId = b.id;
+  const r = tile.getBoundingClientRect();
+  const w = Math.min(r.width * 1.12, 170), h = w * 1.5, menuH = 5 * 46 + 8, stackW = Math.max(250, w);
+  const left = Math.min(Math.max(r.left + r.width / 2 - stackW / 2, 12), innerWidth - stackW - 12);
+  const top = Math.max(12, Math.min(r.top - (h - r.height) / 2, innerHeight - h - 10 - menuH - 24));
+  $('#ctxStack').style.cssText = `left:${left}px;top:${top}px;width:${stackW}px`;
+  const preview = $('#ctxPreview');
+  preview.style.cssText = `width:${w}px;margin-left:${Math.min(Math.max(r.left + r.width / 2 - w / 2 - left, 0), stackW - w)}px`;
+  preview.innerHTML = cover(b);
+  preview.setAttribute('aria-label', `Open ${b.title}`);
+  $('#ctxMenu').style.marginLeft = r.left + r.width / 2 > innerWidth / 2 ? 'auto' : '0';
+  $('#ctxMenu').innerHTML = [...PLACES, ['read', 'Finished']].map(([v, l]) =>
+    `<button role="menuitemradio" aria-checked="${b.status === v}" data-place="${v}"><span class="tick">${b.status === v ? ic('check') : ''}</span><span>${l}</span>${ic(TABS[v][1])}</button>`).join('')
+    + `<div class="gap" role="separator"></div><button role="menuitem" class="danger" data-remove><span class="tick"></span><span>Remove</span>${ic('trash')}</button>`;
+  ctxAt = performance.now();
+  $('#ctx').showModal();
+}
+
+$('#ctx').addEventListener('click', e => {
+  if (performance.now() - ctxAt < 450) return; // lifting the finger that opened the menu must not pick an item
+  const ctx = $('#ctx');
+  const b = books.find(x => x.id === ctxId);
+  const btn = e.target.closest('button');
+  ctx.close();
+  if (!b || !btn) return;
+  if (btn.dataset.place) { b.status = btn.dataset.place; save(); }
+  else if (btn.hasAttribute('data-remove')) {
+    if (confirm(`Remove “${b.title}” from your books?`)) { books = books.filter(x => x !== b); save(); }
+  } else if (btn === $('#ctxPreview')) {
+    const tile = $(`.tile[data-id="${CSS.escape(b.id)}"]`);
+    if (tile) openBook(tile);
+  }
+});
+
+// Book details from Open Library, fetched the first time a book is opened and kept with the book.
+const loading = new Set();
+const failed = new Set();
+const cleanText = t => String(t).split(/\r?\n\s*-{3,}/)[0].replace(/\[([^\]]+)\]\([^)]*\)/g, '$1').replace(/\r/g, '').trim();
+
+async function loadDetails(id) {
+  const b = books.find(x => x.id === id);
+  if (!b || b.details || loading.has(id)) return;
+  loading.add(id);
+  failed.delete(id);
+  try {
+    let { key, year, pages } = b;
+    if (!/^\/works\/OL\d+W$/.test(key || '')) {
+      const params = `title=${encodeURIComponent(b.title)}${b.author ? `&author=${encodeURIComponent(b.author.split(',')[0])}` : ''}`;
+      const doc = (await getJSON(`https://openlibrary.org/search.json?${params}&limit=1&fields=key,first_publish_year,number_of_pages_median`)).docs[0] || {};
+      key = doc.key;
+      year = year || doc.first_publish_year;
+      pages = pages || doc.number_of_pages_median;
+    }
+    const work = /^\/works\/OL\d+W$/.test(key || '') ? await getJSON(`https://openlibrary.org${key}.json`) : {};
+    const text = typeof work.description === 'string' ? work.description : work.description?.value || '';
+    const fresh = books.find(x => x.id === id);
+    if (fresh) {
+      fresh.details = { key: key || '', year: +year || 0, pages: +pages || 0, description: cleanText(text) };
+      localStorage.books = JSON.stringify(books);
+    }
+  } catch {
+    failed.add(id);
+  }
+  loading.delete(id);
+  if (current === id && $('#sheet').open) { $('#about').innerHTML = aboutHTML(books.find(x => x.id === id)); $('#meta').textContent = metaText(books.find(x => x.id === id)); }
+}
+
+function metaText(b) {
+  const year = b.details?.year || b.year, pages = b.details?.pages || b.pages;
+  return [year, pages && `${pages} pages`].filter(Boolean).join(' · ');
+}
+
+function aboutHTML(b) {
+  const d = b.details;
+  if (!d) return failed.has(b.id)
+    ? `<h3>About This Book</h3><p class="muted">Couldn't load details from Open Library. Check your connection.</p><button class="more" data-retry>Try Again</button>`
+    : `<h3>About This Book</h3><div class="skel" aria-label="Loading details"><i style="width:94%"></i><i style="width:88%"></i><i style="width:91%"></i><i style="width:55%"></i></div>`;
+  const text = String(d.description || ''); // details can arrive from a restored backup, so don't trust the type
+  const paras = text.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
+  const long = text.length > 320;
+  const body = paras.length
+    ? `<div class="${long && !expanded ? 'clamp' : ''}">${paras.map(p => `<p>${esc(p)}</p>`).join('')}</div>`
+    : `<p class="muted">Open Library doesn't have a description for this book.</p>`;
+  return `<h3>About This Book</h3>${body}${long && !expanded ? '<button class="more" data-more>More</button>' : ''}${d.key ? `<a class="link" href="https://openlibrary.org${esc(d.key)}" target="_blank" rel="noopener">View on Open Library</a>` : ''}`;
+}
 
 function renderSheet(popFrom = 0) {
   const b = books.find(b => b.id === current);
@@ -401,11 +556,12 @@ function renderSheet(popFrom = 0) {
   // One control for the book's four states, so something is always selected; stars appear under Finished.
   $('#sheetBody').innerHTML = `
     <div class="book-head">${cover(b, 'style="view-transition-name:lift"')}
-      <div><h2 id="sheetTitle">${esc(b.title)}</h2><p class="author">${esc(b.author)}</p></div></div>
+      <div><h2 id="sheetTitle">${esc(b.title)}</h2><p class="author">${esc(b.author)}</p><p class="meta" id="meta">${esc(metaText(b))}</p></div></div>
     <div class="seg" role="radiogroup" aria-label="List">${[...PLACES, ['read', 'Finished']].map(([v, l]) =>
       `<button role="radio" aria-checked="${b.status === v}" data-place="${v}">${l}</button>`).join('')}</div>
     ${b.status === 'read' ? `<div class="group rate" role="radiogroup" aria-label="Your rating">${[1, 2, 3, 4, 5].map(n =>
       `<button role="radio" aria-checked="${b.rating === n}" aria-label="${n} star${n > 1 ? 's' : ''}" data-rate="${n}" style="--i:${n}" class="${popFrom && n <= popFrom ? 'pop' : ''}">${ic(n <= b.rating ? 'star-fill' : 'star')}</button>`).join('')}</div>` : ''}
+    <div class="group about" id="about" aria-live="polite">${aboutHTML(b)}</div>
     <button class="remove" data-remove>${ic('trash')}Remove from Bookshelf</button>`;
 }
 
@@ -414,6 +570,8 @@ $('#sheet').addEventListener('click', e => {
   if (!btn) return;
   if (btn.hasAttribute('data-done')) return closeSheet($('#sheet'));
   const b = books.find(b => b.id === current);
+  if (btn.hasAttribute('data-more')) { expanded = true; $('#about').innerHTML = aboutHTML(b); return; }
+  if (btn.hasAttribute('data-retry')) { failed.delete(b.id); $('#about').innerHTML = aboutHTML(b); return loadDetails(b.id); }
   let pop = 0;
   if (btn.dataset.rate) pop = b.rating = +btn.dataset.rate;
   else if (btn.dataset.place) b.status = btn.dataset.place;
@@ -456,12 +614,14 @@ async function lookup(q) {
     if (isbn) {
       // The books API returns the exact edition (English title, that edition's cover); search returns the original work.
       const d = (await getJSON(`https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&jscmd=data&format=json`))[`ISBN:${isbn}`];
-      found = d ? [{ title: d.title, author: (d.authors || []).map(a => a.name).join(', '), cover: d.cover?.medium || '' }] : [];
+      found = d ? [{ title: d.title, author: (d.authors || []).map(a => a.name).join(', '), cover: d.cover?.medium || '',
+        year: +(d.publish_date || '').match(/\d{4}/)?.[0] || 0, pages: d.number_of_pages || 0 }] : [];
     } else {
-      found = (await getJSON(`https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=20&fields=title,author_name,cover_i`)).docs.map(d => ({
+      found = (await getJSON(`https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=20&fields=key,title,author_name,cover_i,first_publish_year,number_of_pages_median`)).docs.map(d => ({
         title: d.title,
         author: (d.author_name || []).join(', '),
         cover: d.cover_i ? `https://covers.openlibrary.org/b/id/${d.cover_i}-M.jpg` : '',
+        key: d.key, year: d.first_publish_year || 0, pages: d.number_of_pages_median || 0,
       }));
     }
     $('#msg').textContent = found.length ? `Tap + to add to ${PLACES.find(p => p[0] === addTo)[1]}.`
@@ -488,7 +648,7 @@ $('#results').onclick = e => {
   const btn = e.target.closest('.addone');
   if (!btn || btn.disabled) return;
   const b = found[btn.dataset.i];
-  books.push({ ...b, id: crypto.randomUUID(), status: addTo, rating: 0 });
+  books.push({ ...b, id: newId(), status: addTo, rating: 0 });
   save();
   btn.disabled = true;
   btn.innerHTML = ic('check');

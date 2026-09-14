@@ -34,6 +34,8 @@ No account, no social feed, no tracking: one file on her phone that knows her bo
 
 - Lists: Shelf (everything except wishlist), Read next, Wishlist, Read. List names may change; the four states must stay.
 - Marking a book read reveals a 1-5 star rating.
+- Long-pressing a cover opens quick actions (move between lists, remove) without opening the book.
+- Opening a book shows its first-published year, page count and Open Library description, fetched once and saved with the book.
 - Search filters her own books by title or author.
 - Book data and covers come from Open Library (free, no key). Some books have no cover image.
 - Barcode reading uses ZXing on a photo (EAN-13 ISBN).
