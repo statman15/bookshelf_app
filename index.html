@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Bookshelf">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Bookshelf</title>
+<!-- iPhone has Gill Sans built in; Cabin (a Gill/Johnston-inspired face) stands in elsewhere. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cabin:wght@400;600;700&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.23.0/umd/index.min.js" integrity="sha384-0ASr5PEWAMtTnWsn0PzKmioHVDA4+QqFiJr94io/0DCrGP6E1gRAmbO6O8y5WZW9" crossorigin="anonymous"></script>
+<style>
+  /* Penguin's 1935 colour code, one colour per list: orange fiction, green crime, cerise travel, blue biography. */
+  :root {
+    color-scheme: light;
+    --shelf: #f06b1f; --next: #1c7a58; --wish: #c8326b; --read: #1f4b8e;
+    --ink: #000; --soft: #5f5f5f; --rule: #e4e4e0; --fill: #f1f1ee;
+    --accent: var(--shelf);
+    font-family: 'Gill Sans', 'Gill Sans MT', Cabin, system-ui, sans-serif;
+  }
+  body[data-tab=next] { --accent: var(--next); }
+  body[data-tab=wish] { --accent: var(--wish); }
+  body[data-tab=read] { --accent: var(--read); }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-size: 17px; line-height: 1.35; color: var(--ink); background: #fff;
+    padding-bottom: calc(70px + env(safe-area-inset-bottom)); }
+  body::before { content: ''; position: fixed; z-index: 3; top: 0; left: 0; right: 0; height: env(safe-area-inset-top); background: var(--accent); transition: background-color .3s; }
+  button, input { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+  /* The header is a Penguin cover: colour band with oval nameplate, white title panel, colour band. */
+  .cover-head { text-align: center; }
+  .band { background: var(--accent); transition: background-color .3s; }
+  .band.top { padding: calc(22px + env(safe-area-inset-top)) 20px 22px; }
+  .cartouche { display: inline-block; padding: 9px 26px; font-size: 19px; font-weight: 700; color: var(--accent); background: #fff; border-radius: 50%; transition: color .3s; }
+  .band.bottom { height: 30px; }
+  .panel { padding: 28px 24px 26px; }
+  .panel h1 { margin: 0; font-size: 50px; font-weight: 700; line-height: 1; letter-spacing: -0.01em; }
+  .panel h1::after { content: ''; display: block; width: 44px; height: 2px; margin: 16px auto 12px; background: var(--accent); }
+  .panel p { margin: 0; color: var(--soft); }
+
+  .bar { position: sticky; top: env(safe-area-inset-top); z-index: 2; display: flex; gap: 8px; padding: 12px 20px; background: #fff; }
+  input[type=search] { flex: 1; min-width: 0; padding: 10px 14px; font-size: 16px; background: var(--fill); border: 0; border-radius: 10px; -webkit-appearance: none; }
+  .solid { flex: none; padding: 10px 18px; font-weight: 600; color: #fff; background: var(--ink); border: 0; border-radius: 10px; }
+  .solid:active { opacity: .8; }
+  label.solid input, footer input { position: absolute; width: 0; opacity: 0; }
+
+  /* Covers are the page: a three-across grid, colour strip under each cover shows which list it's on. */
+  ul { list-style: none; margin: 0; padding: 0 20px; }
+  #list { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 26px 14px; padding-top: 10px; counter-reset: n; }
+  .tile { display: flex; flex-direction: column; width: 100%; padding: 0; text-align: left; background: none; border: 0; }
+  .thumb { position: relative; display: block; width: 100%; aspect-ratio: 2 / 3; overflow: hidden; border-bottom: 5px solid var(--c); border-radius: 2px 2px 0 0; box-shadow: 0 2px 6px #0002; }
+  .thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  /* No cover image: draw a tiny three-band cover with the title in the white band. */
+  .thumb.blank { display: grid; place-items: center; padding: 0 8px; border-bottom: 0; font-size: 13px; font-weight: 700; line-height: 1.15; text-align: center;
+    background: linear-gradient(var(--c) 0 30%, #fff 30% 72%, var(--c) 72%); }
+  .tile:active .thumb { transform: scale(.97); }
+  .numbered li { counter-increment: n; }
+  .numbered .thumb::after { content: counter(n); position: absolute; top: 6px; left: 6px; display: grid; place-items: center; min-width: 26px; height: 26px;
+    font-size: 15px; font-weight: 700; color: #fff; background: var(--c); border-radius: 50%; box-shadow: 0 0 0 2px #fff; }
+  .t { display: -webkit-box; margin-top: 8px; overflow: hidden; font-size: 15px; font-weight: 600; line-height: 1.2; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .a { margin-top: 2px; overflow: hidden; font-size: 13px; color: var(--soft); white-space: nowrap; text-overflow: ellipsis; }
+  .mini { margin-top: 2px; font-size: 13px; letter-spacing: 1px; color: var(--c); }
+  .empty { grid-column: 1 / -1; max-width: 32ch; padding: 18px 0; color: var(--soft); }
+
+  footer { display: flex; gap: 20px; padding: 36px 20px 26px; }
+  footer button, footer label { padding: 6px 0; font-size: 15px; color: var(--soft); background: none; border: 0; text-decoration: underline; text-underline-offset: 3px; }
+
+  /* Tab bar doubles as the colour key: each tab carries its list colour along the top edge. */
+  nav { position: fixed; z-index: 2; left: 0; right: 0; bottom: 0; display: flex; padding-bottom: env(safe-area-inset-bottom); background: #fff; box-shadow: 0 -1px 0 var(--rule); }
+  nav button { flex: 1; padding: 16px 0 14px; font-size: 15px; color: var(--soft); background: none; border: 0; border-top: 3px solid var(--c); }
+  nav button.on { padding-top: 13px; font-weight: 700; color: var(--ink); border-top-width: 6px; }
+  nav [data-tab=shelf] { --c: var(--shelf); }
+  nav [data-tab=next] { --c: var(--next); }
+  nav [data-tab=wish] { --c: var(--wish); }
+  nav [data-tab=read] { --c: var(--read); }
+
+  dialog { padding: 0; border: 0; color: var(--ink); background: #fff; }
+  dialog::backdrop { background: #0006; }
+
+  /* Add a book: full screen. */
+  #dlg { width: 100%; height: 100%; max-width: none; max-height: none; margin: 0; padding-bottom: env(safe-area-inset-bottom); }
+  #dlg .band { height: calc(10px + env(safe-area-inset-top)); }
+  #dlg .bar { top: 0; }
+  .dhead { display: flex; align-items: baseline; justify-content: space-between; padding: 18px 20px 2px; }
+  .dhead h2 { margin: 0; font-size: 30px; font-weight: 700; }
+  .text-btn { padding: 8px 0; font-size: 17px; font-weight: 600; background: none; border: 0; }
+  #msg { margin: 2px 20px 4px; font-size: 15px; color: var(--soft); }
+  .book { display: grid; grid-template-columns: 56px 1fr; gap: 14px; padding: 16px 0; border-bottom: 1px solid var(--rule); }
+  .book .thumb { width: 56px; }
+  .book .title { font-size: 18px; font-weight: 600; line-height: 1.2; }
+  .book .author { margin-top: 2px; font-size: 15px; color: var(--soft); }
+  .pick { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .pick button, .places button { padding: 6px 12px; font-size: 15px; font-weight: 600; background: #fff; border: 2px solid var(--c); border-radius: 999px; }
+  .added { margin-top: 10px; font-weight: 600; color: var(--c); }
+
+  /* One book: bottom sheet, banded in its list colour. */
+  #sheet { width: 100%; max-width: 560px; margin: auto auto 0; overflow: hidden; border-radius: 14px 14px 0 0; padding-bottom: calc(18px + env(safe-area-inset-bottom)); }
+  #sheet[open] { animation: up .28s cubic-bezier(.2, .8, .3, 1); }
+  @keyframes up { from { transform: translateY(100%); } }
+  #sheet .band { height: 14px; background: var(--c); }
+  .sheet-body { display: grid; grid-template-columns: 96px 1fr; gap: 6px 18px; padding: 20px 20px 0; }
+  .sheet-body .thumb { grid-row: span 3; }
+  .sheet-body h2 { margin: 0; font-size: 22px; font-weight: 700; line-height: 1.15; }
+  .sheet-body .author { color: var(--soft); }
+  .check { display: flex; align-items: center; gap: 10px; font-weight: 600; }
+  input[type=checkbox] { flex: none; width: 26px; height: 26px; margin: 0; border: 2px solid #bdbdb8; border-radius: 7px; -webkit-appearance: none; appearance: none; }
+  input[type=checkbox]:checked { background: var(--c) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 12.5l4 4 8-9' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/100%; border-color: var(--c); animation: pop .25s ease-out; }
+  @keyframes pop { 50% { transform: scale(.8); } }
+  .stars { grid-column: 1 / -1; display: flex; justify-content: center; gap: 4px; padding-top: 14px; }
+  .stars button { padding: 0 4px; font-size: 36px; line-height: 1; color: var(--c); background: none; border: 0; }
+  .places { grid-column: 1 / -1; display: flex; gap: 8px; padding-top: 18px; }
+  .places button { flex: 1; padding: 10px 0; }
+  .places button.on { color: #fff; background: var(--c); }
+  .sheet-foot { grid-column: 1 / -1; display: flex; justify-content: space-between; padding-top: 16px; }
+  .sheet-foot .remove { color: #b3261e; font-weight: 400; }
+
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body data-tab="shelf">
+<header class="cover-head">
+  <div class="band top"><span class="cartouche">Bookshelf</span></div>
+  <div class="panel">
+    <h1 id="title">Shelf</h1>
+    <p id="count"></p>
+  </div>
+  <div class="band bottom"></div>
+</header>
+<div class="bar">
+  <input type="search" id="q" placeholder="Search my books">
+  <button id="add" class="solid">Add</button>
+</div>
+<ul id="list"></ul>
+<footer>
+  <button id="export">Save a backup</button>
+  <label>Restore from backup<input id="import" type="file" accept="application/json,.json"></label>
+</footer>
+<nav id="tabs">
+  <button data-tab="shelf" class="on">Shelf</button>
+  <button data-tab="next">Read next</button>
+  <button data-tab="wish">Wishlist</button>
+  <button data-tab="read">Read</button>
+</nav>
+
+<dialog id="sheet"><div class="band"></div><div class="sheet-body" id="sheetBody"></div></dialog>
+
+<dialog id="dlg">
+  <div class="band"></div>
+  <div class="dhead">
+    <h2>Add a book</h2>
+    <button id="close" class="text-btn">Done</button>
+  </div>
+  <form id="find" class="bar">
+    <input type="search" id="q2" placeholder="Title, author or ISBN" enterkeyhint="search">
+    <label class="solid">Scan barcode<input id="photo" type="file" accept="image/*" capture="environment"></label>
+  </form>
+  <p id="msg">Search by title, author or ISBN, or scan the barcode on the back cover.</p>
+  <ul id="results"></ul>
+</dialog>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
+let books = JSON.parse(localStorage.books || '[]');
+let tab = 'shelf';
+let found = [];
+let current = null;
+
+const tabs = {
+  shelf: ['Shelf', 'on the shelf', 'Your shelf is empty. Tap Add to find a book by its title or the barcode on the back.'],
+  next: ['Read next', 'lined up', 'Nothing lined up. Open any book and choose Read next to queue it here.'],
+  wish: ['Wishlist', 'wanted', 'No wishes yet. Tap Add, find a book, and choose Wishlist.'],
+  read: ['Read', 'finished', "Open a book and tick I've read this. It lands here with your stars."],
+};
+const places = [['shelf', 'Shelf'], ['next', 'Read next'], ['wish', 'Wishlist']];
+const plural = (n, word) => `${n || 'No'} ${word}${n === 1 ? '' : word.endsWith('h') ? 'es' : 's'}`;
+const hue = status => `style="--c:var(--${status})"`;
+
+function save() { localStorage.books = JSON.stringify(books); render(); }
+
+function thumb(b) {
+  return b.cover ? `<span class="thumb"><img src="${esc(b.cover)}" alt="" loading="lazy"></span>` : `<span class="thumb blank">${esc(b.title)}</span>`;
+}
+
+function visible(books, tab, q) {
+  q = q.trim().toLowerCase();
+  if (q) return books.filter(b => `${b.title} ${b.author}`.toLowerCase().includes(q));
+  return books.filter(b => tab === 'shelf' ? b.status !== 'wish' : b.status === tab);
+}
+
+function render() {
+  const q = $('#q').value.trim();
+  const shown = visible(books, tab, q);
+  const [name, verb, empty] = tabs[tab];
+  document.body.dataset.tab = tab;
+  $('#title').textContent = q ? 'Search' : name;
+  $('#count').textContent = q ? `${plural(shown.length, 'match')} in all your books` : `${plural(shown.length, 'book')} ${verb}`;
+  $('#list').classList.toggle('numbered', tab === 'next' && !q);
+  $('#list').innerHTML = shown.map(b => `<li><button class="tile" data-id="${esc(b.id)}" ${hue(b.status)}>
+    ${thumb(b)}<span class="t">${esc(b.title)}</span><span class="a">${esc(b.author)}</span>
+    ${b.status === 'read' && b.rating ? `<span class="mini" aria-label="${b.rating} stars">${'★'.repeat(b.rating)}</span>` : ''}
+  </button></li>`).join('') || `<li class="empty">${q ? 'No books match that search.' : empty}</li>`;
+}
+
+function renderSheet() {
+  const b = books.find(b => b.id === current);
+  $('#sheet').setAttribute('style', `--c:var(--${b.status})`);
+  $('#sheetBody').innerHTML = `${thumb(b)}
+    <h2>${esc(b.title)}</h2>
+    <div class="author">${esc(b.author)}</div>
+    <label class="check"><input type="checkbox" ${b.status === 'read' ? 'checked' : ''}> I've read this</label>
+    ${b.status === 'read' ? `<div class="stars">${[1, 2, 3, 4, 5].map(n => `<button data-rate="${n}" aria-label="${n} stars">${n <= b.rating ? '★' : '☆'}</button>`).join('')}</div>` : ''}
+    <div class="places">${places.map(([v, l]) => `<button data-place="${v}" ${hue(v)} class="${b.status === v ? 'on' : ''}">${l}</button>`).join('')}</div>
+    <div class="sheet-foot"><button class="text-btn remove" data-remove>Remove book</button><button class="text-btn" data-done>Done</button></div>`;
+}
+
+$('#list').onclick = e => {
+  const tile = e.target.closest('.tile');
+  if (!tile) return;
+  current = tile.dataset.id;
+  renderSheet();
+  $('#sheet').showModal();
+};
+
+// In the sheet: tick marks read (stars appear), list buttons move it, and Remove deletes it.
+$('#sheet').onchange = e => {
+  books.find(b => b.id === current).status = e.target.checked ? 'read' : 'shelf';
+  setTimeout(() => { save(); renderSheet(); }, 200); // let the tick land first
+};
+$('#sheet').onclick = e => {
+  if (e.target === $('#sheet')) return $('#sheet').close(); // tap on the dimmed backdrop
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  const b = books.find(b => b.id === current);
+  if (btn.dataset.done !== undefined) return $('#sheet').close();
+  if (btn.dataset.rate) b.rating = +btn.dataset.rate;
+  if (btn.dataset.place) b.status = btn.dataset.place;
+  if (btn.dataset.remove !== undefined) {
+    if (!confirm(`Remove “${b.title}” from your books?`)) return;
+    books = books.filter(x => x !== b);
+    $('#sheet').close();
+    return save();
+  }
+  save();
+  renderSheet();
+};
+
+$('#q').oninput = render;
+$('#tabs').onclick = e => {
+  if (!e.target.dataset.tab) return;
+  tab = e.target.dataset.tab;
+  $('#q').value = '';
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b === e.target));
+  render();
+  scrollTo(0, 0);
+};
+
+// Adding books: Open Library search (free, no key) by text or ISBN.
+$('#add').onclick = () => $('#dlg').showModal();
+$('#close').onclick = () => { $('#dlg').close(); render(); };
+$('#find').onsubmit = e => {
+  e.preventDefault();
+  const q = $('#q2').value.trim();
+  if (q) lookup(q);
+};
+
+const getJSON = url => fetch(url).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); });
+
+async function lookup(q) {
+  $('#msg').textContent = 'Searching Open Library…';
+  $('#results').innerHTML = '';
+  const isbn = /^[\d-]{10,17}x?$/i.test(q) && q.replace(/-/g, '');
+  try {
+    if (isbn) {
+      // The books API returns the exact edition (English title, that edition's cover); search returns the original work.
+      const d = (await getJSON(`https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&jscmd=data&format=json`))[`ISBN:${isbn}`];
+      found = d ? [{ title: d.title, author: (d.authors || []).map(a => a.name).join(', '), cover: d.cover?.medium || '' }] : [];
+    } else {
+      found = (await getJSON(`https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=15&fields=title,author_name,cover_i`)).docs.map(d => ({
+        title: d.title,
+        author: (d.author_name || []).join(', '),
+        cover: d.cover_i ? `https://covers.openlibrary.org/b/id/${d.cover_i}-M.jpg` : '',
+      }));
+    }
+    $('#msg').textContent = found.length ? 'Choose where each book goes.'
+      : isbn ? `Open Library doesn't have ISBN ${isbn}. Search by the title instead.` : 'No matches. Check the spelling, or try just the title.';
+    $('#results').innerHTML = found.map((b, i) => `<li class="book" data-i="${i}" ${hue('shelf')}>${thumb(b)}
+      <div><div class="title">${esc(b.title)}</div><div class="author">${esc(b.author)}</div>
+      <div class="pick">${places.map(([v, l]) => `<button data-s="${v}" ${hue(v)}>${l}</button>`).join('')}</div></div></li>`).join('');
+  } catch {
+    $('#msg').textContent = "Couldn't reach Open Library. Check your connection, then search again.";
+  }
+}
+
+$('#results').onclick = e => {
+  const s = e.target.dataset.s;
+  if (!s) return;
+  const li = e.target.closest('li');
+  books.push({ ...found[li.dataset.i], id: crypto.randomUUID(), status: s, rating: 0 });
+  save();
+  li.style.setProperty('--c', `var(--${s})`);
+  e.target.parentElement.outerHTML = `<div class="added">Added to ${e.target.textContent}</div>`;
+};
+
+// Photo of the back cover -> ISBN. Downscale first: a 12MP iPhone photo is slow to scan.
+async function readBarcode(file) {
+  const img = new Image();
+  await new Promise((ok, fail) => { img.onload = ok; img.onerror = fail; img.src = URL.createObjectURL(file); });
+  const scale = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight));
+  const c = document.createElement('canvas');
+  c.width = img.naturalWidth * scale;
+  c.height = img.naturalHeight * scale;
+  c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+  URL.revokeObjectURL(img.src);
+  const hints = new Map([[ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.EAN_13]], [ZXing.DecodeHintType.TRY_HARDER, true]]);
+  const bitmap = new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(new ZXing.HTMLCanvasElementLuminanceSource(c)));
+  return new ZXing.MultiFormatReader().decode(bitmap, hints).getText();
+}
+
+$('#photo').onchange = async e => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  $('#msg').textContent = 'Reading the barcode…';
+  $('#results').innerHTML = '';
+  try {
+    const isbn = await readBarcode(file);
+    $('#q2').value = isbn;
+    lookup(isbn);
+  } catch {
+    $('#msg').textContent = "Couldn't find a barcode in that photo. Fill the frame with the barcode and try again, or type the title.";
+  }
+};
+
+// Books live only on this phone, so backups matter. Share sheet -> Save to Files.
+$('#export').onclick = () => {
+  const file = new File([JSON.stringify(books)], `bookshelf-${new Date().toISOString().slice(0, 10)}.json`, { type: 'application/json' });
+  if (navigator.canShare?.({ files: [file] })) return navigator.share({ files: [file] }).catch(() => {});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(file);
+  a.download = file.name;
+  a.click();
+};
+$('#import').onchange = async e => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  try {
+    const data = JSON.parse(await file.text());
+    if (!Array.isArray(data) || !data.every(b => b.id && b.title && ['shelf', 'next', 'wish', 'read'].includes(b.status))) throw 0;
+    if (confirm(`Replace your ${books.length} books with the ${data.length} in this backup?`)) { books = data; save(); }
+  } catch {
+    alert("That file isn't a Bookshelf backup.");
+  }
+};
+
+render();
+</script>
+</body>
+</html>

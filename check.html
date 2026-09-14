@@ -1,0 +1,32 @@
+<!doctype html>
+<meta charset="utf-8">
+<!-- Self-check: open over http (not file://). Draws an ISBN barcode, runs the app's own scanner and filter on it. -->
+<title>Bookshelf check</title>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.12.3/dist/JsBarcode.all.min.js" integrity="sha384-vmcSy8TM1KhZWBIKMKTR8AxbrJQCuConAolGY+42odu9ZGIzw8L8xAT/u7ul4X2U" crossorigin="anonymous"></script>
+<iframe id="app" src="index.html" hidden></iframe>
+<pre id="out">running…</pre>
+<script>
+addEventListener("load", async () => {
+  const w = app.contentWindow, out = document.getElementById('out');
+  try {
+    const c = document.createElement('canvas');
+    JsBarcode(c, '9780140449136', { format: 'EAN13' });
+    const blob = await new Promise(r => c.toBlob(r));
+    const isbn = await w.readBarcode(blob);
+    console.assert(isbn === '9780140449136', isbn);
+    if (isbn !== '9780140449136') throw new Error('barcode read ' + isbn);
+
+    const books = [
+      { title: 'Dune', author: 'Frank Herbert', status: 'read' },
+      { title: 'Emma', author: 'Jane Austen', status: 'wish' },
+      { title: 'Ulysses', author: 'James Joyce', status: 'next' },
+    ];
+    const titles = (tab, q) => w.visible(books, tab, q).map(b => b.title).join();
+    const cases = [['shelf', '', 'Dune,Ulysses'], ['wish', '', 'Emma'], ['next', '', 'Ulysses'], ['read', '', 'Dune'], ['read', 'austen', 'Emma']];
+    for (const [tab, q, want] of cases) if (titles(tab, q) !== want) throw new Error(`${tab}/${q}: ${titles(tab, q)} != ${want}`);
+    out.textContent = 'PASS';
+  } catch (e) {
+    out.textContent = 'FAIL ' + e.message;
+  }
+});
+</script>
