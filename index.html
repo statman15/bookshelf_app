@@ -547,7 +547,7 @@ function aboutHTML(b) {
   const body = paras.length
     ? `<div class="${long && !expanded ? 'clamp' : ''}">${paras.map(p => `<p>${esc(p)}</p>`).join('')}</div>`
     : `<p class="muted">Open Library doesn't have a description for this book.</p>`;
-  return `<h3>About This Book</h3>${body}${long && !expanded ? '<button class="more" data-more>More</button>' : ''}${d.key ? `<a class="link" href="https://openlibrary.org${esc(d.key)}" target="_blank" rel="noopener">View on Open Library</a>` : ''}`;
+  return `<h3>About This Book</h3>${body}${long && !expanded ? '<button class="more" data-more>More</button>' : ''}${/^\/works\/OL\d+W$/.test(d.key || '') ? `<a class="link" href="https://openlibrary.org${d.key}" target="_blank" rel="noopener">View on Open Library</a>` : ''}`;
 }
 
 function renderSheet(popFrom = 0) {
