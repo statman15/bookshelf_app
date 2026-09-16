@@ -803,10 +803,19 @@ async function openLibrary(q, isbn) {
   try {
     if (isbn) {
       // The books API returns the exact edition (English title, that edition's cover); search returns the original work.
-      const d = (await getJSON(`https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&jscmd=data&format=json`))[`ISBN:${isbn}`];
-      return d ? [{ title: d.title, author: (d.authors || []).map(a => a.name).join(', '), cover: d.cover?.medium || '',
+      // For some ISBNs this answers 404 with an empty body rather than {}, so a failure here must not end the lookup.
+      const d = (await getJSON(`https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&jscmd=data&format=json`).catch(() => ({})))[`ISBN:${isbn}`];
+      if (d) return [{ title: d.title, author: (d.authors || []).map(a => a.name).join(', '), cover: d.cover?.medium || '',
         year: +(d.publish_date || '').match(/\d{4}/)?.[0] || 0, pages: d.number_of_pages || 0,
-        genres: tidyGenres((d.subjects || []).map(s => s.name || s)), publisher: (d.publishers || [])[0]?.name || '' }] : [];
+        genres: tidyGenres((d.subjects || []).map(s => s.name || s)), publisher: (d.publishers || [])[0]?.name || '' }];
+      // The edition lookup is empty for plenty of books the search index still knows by ISBN
+      // (Purpose for the Pain, 9780615223186, is one), so ask the index before giving up.
+      return (await getJSON(`https://openlibrary.org/search.json?isbn=${isbn}&limit=1&fields=key,title,author_name,cover_i,first_publish_year,number_of_pages_median`)).docs.map(x => ({
+        title: x.title,
+        author: (x.author_name || []).join(', '),
+        cover: x.cover_i ? `https://covers.openlibrary.org/b/id/${x.cover_i}-M.jpg` : '',
+        key: x.key, year: x.first_publish_year || 0, pages: x.number_of_pages_median || 0,
+      }));
     }
     return (await getJSON(`https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=20&fields=key,title,author_name,cover_i,first_publish_year,number_of_pages_median`)).docs.map(d => ({
       title: d.title,
