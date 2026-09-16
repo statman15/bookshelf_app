@@ -151,6 +151,16 @@
   .about .muted { color: var(--label2); }
   .about .more, .about .link { display: inline-flex; align-items: center; min-height: 44px; margin-right: 20px; font-size: 15px; font-weight: 600; color: var(--tint); text-decoration: none; }
   .about .skel { padding-bottom: 10px; }
+  .facts { margin: 0 0 16px; padding: 4px 16px; }
+  .facts div { display: flex; gap: 16px; justify-content: space-between; padding: 10px 0; font-size: 15px; }
+  .facts div + div { box-shadow: inset 0 .5px 0 var(--sep); }
+  .facts dt { flex: none; color: var(--label2); }
+  .facts dd { margin: 0; text-align: right; }
+  .manual form { display: grid; gap: 12px; padding: 12px 0 4px; }
+  .manual label { display: grid; gap: 6px; font-size: 15px; color: var(--label2); }
+  .manual input { height: 40px; padding: 0 12px; font-size: 17px; color: var(--label); background: var(--fill); border: 0; border-radius: 10px; -webkit-appearance: none; }
+  .manual input:focus-visible { outline: 2px solid var(--tint); }
+  .manual .pill { justify-self: start; }
   .group { margin-bottom: 16px; border-radius: 12px; background: var(--group); overflow: hidden; }
   .rate { display: flex; justify-content: center; gap: 6px; padding: 8px 0; }
   .rate button { display: grid; place-items: center; width: 50px; height: 50px; color: var(--tint); }
@@ -313,6 +323,7 @@ let books = JSON.parse(localStorage.books || '[]');
 let tab = 'shelf';
 let addTo = 'shelf';
 let found = [];
+let searched = false; // no manual-add form until she has actually searched for something
 let current = null;
 
 const TABS = {
@@ -498,10 +509,28 @@ $('#ctx').addEventListener('click', e => {
   }
 });
 
-// Book details from Open Library, fetched the first time a book is opened and kept with the book.
+// Book details, fetched the first time a book is opened and kept with the book.
 const loading = new Set();
 const failed = new Set();
-const cleanText = t => String(t).split(/\r?\n\s*-{3,}/)[0].replace(/\[([^\]]+)\]\([^)]*\)/g, '$1').replace(/\r/g, '').trim();
+const cleanText = t => String(t).split(/\r?\n\s*-{3,}/)[0].replace(/\[([^\]]+)\]\([^)]*\)/g, '$1').replace(/<[^>]*>/g, '').replace(/\r/g, '').trim();
+
+// Open Library subjects are a grab bag: shelf codes, library flags and sentence-long strings. Keep the ones that read like a genre.
+const JUNK = /^(accessible book|protected daisy|in library|overdrive|large type|open library|internet archive|reading level|new york times|bestseller|award|nyt|award winning|translations into|readers)/i;
+function tidyGenres(list) {
+  const out = [];
+  const key = s => s.toLowerCase().replace(/[^a-z]/g, ''); // "Sci-Fi" and "sci fi" are the same word to her
+  for (const raw of list || []) {
+    const s = String(raw).replace(/^(fiction|nonfiction)[,:/]\s*/i, '').split(/\s*[\/,]\s*/)[0].trim();
+    if (!s || s.length > 28 || s.includes(':') || /\d{4}/.test(s) || JUNK.test(s)) continue;
+    const label = s.replace(/\s+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    const k = key(label);
+    // Skip anything that repeats a genre already kept, in either direction ("Sci Fi" next to "Hard Sci Fi").
+    if (out.some(x => key(x).includes(k) || k.includes(key(x)))) continue;
+    out.push(label);
+    if (out.length === 3) break;
+  }
+  return out;
+}
 
 async function loadDetails(id) {
   const b = books.find(x => x.id === id);
@@ -509,31 +538,59 @@ async function loadDetails(id) {
   loading.add(id);
   failed.delete(id);
   try {
-    let { key, year, pages } = b;
+    let { key, year, pages, genres = [], publisher = '', description = '' } = b;
     if (!/^\/works\/OL\d+W$/.test(key || '')) {
       const params = `title=${encodeURIComponent(b.title)}${b.author ? `&author=${encodeURIComponent(b.author.split(',')[0])}` : ''}`;
-      const doc = (await getJSON(`https://openlibrary.org/search.json?${params}&limit=1&fields=key,first_publish_year,number_of_pages_median`)).docs[0] || {};
+      const fields = 'key,first_publish_year,number_of_pages_median,subject';
+      const hit = async u => (await getJSON(u).catch(() => ({ docs: [] }))).docs?.[0];
+      // The title+author index misses some books, so fall back to a plain search of both words.
+      const doc = await hit(`https://openlibrary.org/search.json?${params}&limit=1&fields=${fields}`)
+        || await hit(`https://openlibrary.org/search.json?q=${encodeURIComponent(`${b.title} ${b.author || ''}`.trim())}&limit=1&fields=${fields}`) || {};
       key = doc.key;
       year = year || doc.first_publish_year;
       pages = pages || doc.number_of_pages_median;
+      if (!genres.length) genres = tidyGenres(doc.subject);
+      // No publisher here on purpose: the search index hands back an arbitrary edition, often a foreign one.
     }
-    const work = /^\/works\/OL\d+W$/.test(key || '') ? await getJSON(`https://openlibrary.org${key}.json`) : {};
-    const text = typeof work.description === 'string' ? work.description : work.description?.value || '';
+    if (/^\/works\/OL\d+W$/.test(key || '')) {
+      const work = await getJSON(`https://openlibrary.org${key}.json`).catch(() => ({}));
+      const text = typeof work.description === 'string' ? work.description : work.description?.value || '';
+      description = description || cleanText(text);
+      if (!genres.length) genres = tidyGenres(work.subjects);
+    }
+    // Google Books fills the gaps Open Library leaves, and is the only source for some newer books.
+    if (!description || !genres.length || !publisher) {
+      const gb = (await googleBooks(`${b.title} ${b.author || ''}`.trim(), 1))[0];
+      if (gb && gb.title.toLowerCase().slice(0, 18) === b.title.toLowerCase().slice(0, 18)) {
+        description = description || gb.description;
+        if (!genres.length) genres = tidyGenres(gb.genres);
+        publisher = publisher || gb.publisher;
+        year = year || gb.year;
+        pages = pages || gb.pages;
+      }
+    }
     const fresh = books.find(x => x.id === id);
     if (fresh) {
-      fresh.details = { key: key || '', year: +year || 0, pages: +pages || 0, description: cleanText(text) };
+      fresh.details = { key: key || '', year: +year || 0, pages: +pages || 0, genres, publisher, description };
       localStorage.books = JSON.stringify(books);
     }
   } catch {
     failed.add(id);
   }
   loading.delete(id);
-  if (current === id && $('#sheet').open) { $('#about').innerHTML = aboutHTML(books.find(x => x.id === id)); $('#meta').textContent = metaText(books.find(x => x.id === id)); }
+  if (current === id && $('#sheet').open) renderSheet();
 }
 
 function metaText(b) {
   const year = b.details?.year || b.year, pages = b.details?.pages || b.pages;
   return [year, pages && `${pages} pages`].filter(Boolean).join(' · ');
+}
+
+function factsHTML(b) {
+  const d = b.details;
+  if (!d) return '';
+  const rows = [['Genre', (d.genres || []).join(', ')], ['Publisher', d.publisher]].filter(r => r[1]);
+  return rows.length ? `<dl class="facts group">${rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>` : '';
 }
 
 function aboutHTML(b) {
@@ -561,6 +618,7 @@ function renderSheet(popFrom = 0) {
       `<button role="radio" aria-checked="${b.status === v}" data-place="${v}">${l}</button>`).join('')}</div>
     ${b.status === 'read' ? `<div class="group rate" role="radiogroup" aria-label="Your rating">${[1, 2, 3, 4, 5].map(n =>
       `<button role="radio" aria-checked="${b.rating === n}" aria-label="${n} star${n > 1 ? 's' : ''}" data-rate="${n}" style="--i:${n}" class="${popFrom && n <= popFrom ? 'pop' : ''}">${ic(n <= b.rating ? 'star-fill' : 'star')}</button>`).join('')}</div>` : ''}
+    ${factsHTML(b)}
     <div class="group about" id="about" aria-live="polite">${aboutHTML(b)}</div>
     <button class="remove" data-remove>${ic('trash')}Remove from Bookshelf</button>`;
 }
@@ -591,6 +649,11 @@ function renderAddTo() {
   $('#addTo').innerHTML = PLACES.map(([v, l]) => `<button type="button" role="radio" aria-checked="${addTo === v}" data-to="${v}">${l}</button>`).join('');
 }
 function openAdd() {
+  searched = false;
+  found = [];
+  $('#results').innerHTML = '';
+  $('#q2').value = '';
+  $('#msg').textContent = 'Search by title, author or ISBN, or scan the barcode on the back cover.';
   addTo = tab === 'next' || tab === 'wish' ? tab : 'shelf';
   renderAddTo();
   $('#dlg').showModal();
@@ -604,10 +667,43 @@ $('#find').onsubmit = e => {
   if (q) { $('#q2').blur(); lookup(q); }
 };
 
-const getJSON = url => fetch(url).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); });
+// One retry after a pause: Open Library rate-limits bursts, and a phone's connection drops a request now and then.
+async function getJSON(url, retry = 1) {
+  const r = await fetch(url);
+  if (r.ok) return r.json();
+  if (retry && (r.status === 429 || r.status >= 500)) {
+    await new Promise(done => setTimeout(done, 1200));
+    return getJSON(url, 0);
+  }
+  throw new Error(r.status);
+}
+
+// Second source. Open Library is missing plenty of recent editions; Google Books usually has them.
+// Without an API key it shares one global allowance and often answers 429, so every failure is just "no results".
+async function googleBooks(q, max = 20) {
+  try {
+    const d = await getJSON(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=${max}&printType=books`);
+    return (d.items || []).map(it => {
+      const v = it.volumeInfo || {};
+      return {
+        title: [v.title, v.subtitle].filter(Boolean).join(': '),
+        author: (v.authors || []).join(', '),
+        cover: (v.imageLinks?.thumbnail || '').replace(/^http:/, 'https:').replace('&edge=curl', ''),
+        year: +String(v.publishedDate || '').slice(0, 4) || 0,
+        pages: v.pageCount || 0,
+        genres: v.categories || [],
+        publisher: v.publisher || '',
+        description: cleanText(v.description || ''),
+      };
+    }).filter(b => b.title);
+  } catch {
+    return [];
+  }
+}
 
 async function lookup(q) {
-  $('#msg').textContent = 'Searching Open Library…';
+  searched = true;
+  $('#msg').textContent = 'Searching…';
   $('#results').innerHTML = '<li class="row skel"><span class="cover"></span><span><i style="width:70%"></i><i style="width:40%"></i></span></li>'.repeat(4);
   const isbn = /^[\d-]{10,17}x?$/i.test(q) && q.replace(/-/g, '');
   try {
@@ -615,7 +711,9 @@ async function lookup(q) {
       // The books API returns the exact edition (English title, that edition's cover); search returns the original work.
       const d = (await getJSON(`https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&jscmd=data&format=json`))[`ISBN:${isbn}`];
       found = d ? [{ title: d.title, author: (d.authors || []).map(a => a.name).join(', '), cover: d.cover?.medium || '',
-        year: +(d.publish_date || '').match(/\d{4}/)?.[0] || 0, pages: d.number_of_pages || 0 }] : [];
+        year: +(d.publish_date || '').match(/\d{4}/)?.[0] || 0, pages: d.number_of_pages || 0,
+        genres: tidyGenres((d.subjects || []).map(s => s.name || s)), publisher: (d.publishers || [])[0]?.name || '' }] : [];
+      if (!found.length) found = await googleBooks(`isbn:${isbn}`, 5);
     } else {
       found = (await getJSON(`https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=20&fields=key,title,author_name,cover_i,first_publish_year,number_of_pages_median`)).docs.map(d => ({
         title: d.title,
@@ -623,18 +721,40 @@ async function lookup(q) {
         cover: d.cover_i ? `https://covers.openlibrary.org/b/id/${d.cover_i}-M.jpg` : '',
         key: d.key, year: d.first_publish_year || 0, pages: d.number_of_pages_median || 0,
       }));
+      if (!found.length) found = await googleBooks(q);
     }
     $('#msg').textContent = found.length ? `Tap + to add to ${PLACES.find(p => p[0] === addTo)[1]}.`
-      : isbn ? `Open Library doesn't have ISBN ${isbn}. Search by the title instead.` : 'No matches. Check the spelling, or try just the title.';
+      : isbn ? `No book found for ISBN ${isbn}. Search by the title, or add it yourself.` : 'No matches. Check the spelling, or add it yourself.';
     drawResults();
   } catch {
     $('#results').innerHTML = '';
-    $('#msg').textContent = "Couldn't reach Open Library. Check your connection, then search again.";
+    $('#msg').textContent = "Couldn't reach the book services. Check your connection, then search again.";
   }
 }
 
+// Nothing found anywhere: she can still put the book on her shelf by hand.
+function manualForm(prefill = '') {
+  const looksLikeIsbn = /^[\d-]{10,17}x?$/i.test(prefill);
+  $('#results').innerHTML = `<li class="manual"><form id="byhand">
+    <label>Title<input name="title" required value="${looksLikeIsbn ? '' : esc(prefill)}" autocomplete="off" enterkeyhint="done"></label>
+    <label>Author<input name="author" autocomplete="off" enterkeyhint="done"></label>
+    <button class="pill" type="submit">${ic('plus')}Add to ${esc(PLACES.find(p => p[0] === addTo)[1])}</button>
+  </form></li>`;
+  $('#byhand').onsubmit = e => {
+    e.preventDefault();
+    const f = new FormData(e.target);
+    const title = String(f.get('title')).trim();
+    if (!title) return;
+    books.push({ title, author: String(f.get('author')).trim(), cover: '', id: newId(), status: addTo, rating: 0 });
+    save();
+    $('#results').innerHTML = '';
+    $('#msg').textContent = `Added “${title}” to ${PLACES.find(p => p[0] === addTo)[1]}.`;
+  };
+  $('#byhand').elements.title.focus();
+}
+
 function drawResults() {
-  if (!found.length) return;
+  if (!found.length) return searched ? manualForm($('#q2').value.trim()) : undefined;
   const have = new Set(books.map(keyOf));
   const where = PLACES.find(p => p[0] === addTo)[1];
   $('#results').innerHTML = found.map((b, i) => {

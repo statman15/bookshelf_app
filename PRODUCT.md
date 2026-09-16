@@ -37,7 +37,9 @@ No account, no social feed, no tracking: one file on her phone that knows her bo
 - Long-pressing a cover opens quick actions (move between lists, remove) without opening the book.
 - Opening a book shows its first-published year, page count and Open Library description, fetched once and saved with the book.
 - Search filters her own books by title or author.
-- Book data and covers come from Open Library (free, no key). Some books have no cover image.
+- Book data and covers come from Open Library (free, no key), with Google Books as a fallback for editions Open Library lacks. Google Books is used without an API key, so it shares a global allowance and often returns nothing; treat it as a bonus, never a guarantee.
+- When no service has the book, she can add it by hand with title and author.
+- Book details (year, page count, genre, publisher, description) are fetched on first open and saved with the book.
 - Barcode reading uses ZXing on a photo (EAN-13 ISBN).
 - Data lives in localStorage on the phone; JSON backup and restore through the share sheet protects against loss.
 - Stack: a single static `index.html` (vanilla HTML/CSS/JS, no build step), deployed to GitHub Pages at https://statman15.github.io/bookshelf_app/ from `main`. `check.html` is the self-check for the barcode reader and list filter; exported function names `readBarcode` and `visible` must keep working.
