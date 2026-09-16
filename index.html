@@ -763,11 +763,15 @@ async function getJSON(url, retry = 1) {
   throw new Error(r.status);
 }
 
-// Second source. Open Library is missing plenty of recent editions; Google Books usually has them.
-// Without an API key it shares one global allowance and often answers 429, so every failure is just "no results".
+// Two book databases behind one shape. SOURCES sets who answers first; the other one
+// covers what the first is missing. Swap the order to change which database leads.
+const GOOGLE_KEY = ''; // a Books API key restricted to this site; without one Google shares a global allowance and usually answers 429
+const SOURCES = ['openlibrary', 'google'];
+
 async function googleBooks(q, max = 20) {
   try {
-    const d = await getJSON(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=${max}&printType=books`);
+    const key = GOOGLE_KEY ? `&key=${GOOGLE_KEY}` : '';
+    const d = await getJSON(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=${max}&printType=books${key}`);
     return (d.items || []).map(it => {
       const v = it.volumeInfo || {};
       return {
@@ -786,6 +790,30 @@ async function googleBooks(q, max = 20) {
   }
 }
 
+async function openLibrary(q, isbn) {
+  try {
+    if (isbn) {
+      // The books API returns the exact edition (English title, that edition's cover); search returns the original work.
+      const d = (await getJSON(`https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&jscmd=data&format=json`))[`ISBN:${isbn}`];
+      return d ? [{ title: d.title, author: (d.authors || []).map(a => a.name).join(', '), cover: d.cover?.medium || '',
+        year: +(d.publish_date || '').match(/\d{4}/)?.[0] || 0, pages: d.number_of_pages || 0,
+        genres: tidyGenres((d.subjects || []).map(s => s.name || s)), publisher: (d.publishers || [])[0]?.name || '' }] : [];
+    }
+    return (await getJSON(`https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=20&fields=key,title,author_name,cover_i,first_publish_year,number_of_pages_median`)).docs.map(d => ({
+      title: d.title,
+      author: (d.author_name || []).join(', '),
+      cover: d.cover_i ? `https://covers.openlibrary.org/b/id/${d.cover_i}-M.jpg` : '',
+      key: d.key, year: d.first_publish_year || 0, pages: d.number_of_pages_median || 0,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+const ask = (name, q, isbn) => name === 'google'
+  ? googleBooks(isbn ? `isbn:${isbn}` : q, isbn ? 5 : 20)
+  : openLibrary(q, isbn);
+
 let searchSeq = 0;
 async function lookup(q) {
   const seq = ++searchSeq; // a slower earlier search must never overwrite a newer one
@@ -794,21 +822,10 @@ async function lookup(q) {
   $('#results').innerHTML = '<li class="row skel"><span class="cover"></span><span><i style="width:70%"></i><i style="width:40%"></i></span></li>'.repeat(4);
   const isbn = /^[\d-]{10,17}x?$/i.test(q) && q.replace(/-/g, '');
   try {
-    if (isbn) {
-      // The books API returns the exact edition (English title, that edition's cover); search returns the original work.
-      const d = (await getJSON(`https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&jscmd=data&format=json`))[`ISBN:${isbn}`];
-      found = d ? [{ title: d.title, author: (d.authors || []).map(a => a.name).join(', '), cover: d.cover?.medium || '',
-        year: +(d.publish_date || '').match(/\d{4}/)?.[0] || 0, pages: d.number_of_pages || 0,
-        genres: tidyGenres((d.subjects || []).map(s => s.name || s)), publisher: (d.publishers || [])[0]?.name || '' }] : [];
-      if (!found.length) found = await googleBooks(`isbn:${isbn}`, 5);
-    } else {
-      found = (await getJSON(`https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=20&fields=key,title,author_name,cover_i,first_publish_year,number_of_pages_median`)).docs.map(d => ({
-        title: d.title,
-        author: (d.author_name || []).join(', '),
-        cover: d.cover_i ? `https://covers.openlibrary.org/b/id/${d.cover_i}-M.jpg` : '',
-        key: d.key, year: d.first_publish_year || 0, pages: d.number_of_pages_median || 0,
-      }));
-      if (!found.length) found = await googleBooks(q);
+    found = [];
+    for (const name of SOURCES) {
+      found = await ask(name, q, isbn);
+      if (found.length) break; // the second source only answers what the first could not
     }
     if (seq !== searchSeq) return; // she typed on; a newer search owns the results
     $('#msg').textContent = found.length ? `Tap + to add to ${PLACES.find(p => p[0] === addTo)[1]}.`
