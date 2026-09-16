@@ -626,8 +626,9 @@ async function loadDetails(id) {
       description = description || cleanText(text);
       if (!genres.length) genres = tidyGenres(work.subjects);
     }
-    // Google Books fills the gaps Open Library leaves, and is the only source for some newer books.
-    if (!description || !genres.length || !publisher) {
+    // Google Books fills the gaps Open Library leaves, including a cover when Open Library has none.
+    let coverFromGoogle = '';
+    if (!description || !genres.length || !publisher || !b.cover) {
       const gb = (await googleBooks(`${b.title} ${b.author || ''}`.trim(), 1))[0];
       if (gb && gb.title.toLowerCase().slice(0, 18) === b.title.toLowerCase().slice(0, 18)) {
         description = description || gb.description;
@@ -635,11 +636,13 @@ async function loadDetails(id) {
         publisher = publisher || gb.publisher;
         year = year || gb.year;
         pages = pages || gb.pages;
+        coverFromGoogle = gb.cover;
       }
     }
     const fresh = books.find(x => x.id === id);
     if (fresh) {
       fresh.details = { key: key || '', year: +year || 0, pages: +pages || 0, genres, publisher, description };
+      if (!fresh.cover && coverFromGoogle) fresh.cover = coverFromGoogle;
       localStorage.books = JSON.stringify(books);
     }
   } catch {
@@ -765,8 +768,14 @@ async function getJSON(url, retry = 1) {
 
 // Two book databases behind one shape. SOURCES sets who answers first; the other one
 // covers what the first is missing. Swap the order to change which database leads.
-const GOOGLE_KEY = ''; // a Books API key restricted to this site; without one Google shares a global allowance and usually answers 429
+// Books API key, restricted to this site and to the Books API: usable by anyone who views source,
+// but only from statman15.github.io and only for book lookups.
+const GOOGLE_KEY = 'AIzaSyCowSHQ6mw-YimmIKH7CvDmpithdbUoRI8';
+// Open Library answers first: on a title search its top hit was the real book every time, where
+// Google offered study guides and summaries. Google covers the editions Open Library never got.
 const SOURCES = ['openlibrary', 'google'];
+// Google's catalogue carries unofficial summaries and workbooks that outrank the real book.
+const SPAM = /^(summary|analysis|study guide|workbook|conversation starters|a joosr guide|key takeaways|quicklet|sparknotes)\b/i;
 
 async function googleBooks(q, max = 20) {
   try {
@@ -784,7 +793,7 @@ async function googleBooks(q, max = 20) {
         publisher: v.publisher || '',
         description: cleanText(v.description || ''),
       };
-    }).filter(b => b.title);
+    }).filter(b => b.title && !SPAM.test(b.title));
   } catch {
     return [];
   }
