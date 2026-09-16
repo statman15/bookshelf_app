@@ -77,6 +77,10 @@
   .tile img { pointer-events: none; -webkit-user-drag: none; }
   .tile .cover { position: absolute; inset: 0; transition: transform .15s ease-out, filter .15s; }
   .tile:active .cover { transform: scale(.96); filter: brightness(.9); }
+  #list > li { transition: transform .18s cubic-bezier(.2, .9, .25, 1); }
+  #list > li.lifted { position: relative; z-index: 2; transition: none; }
+  #list > li.lifted .cover { transform: scale(1.08); box-shadow: 0 16px 34px var(--lift); }
+  #list > li.lifted .ribbon, #list > li.lifted .badge { opacity: 0; }
 
   .cover { position: relative; display: block; overflow: hidden; background: var(--fill); }
   .cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .2s; }
@@ -328,7 +332,7 @@ let current = null;
 
 const TABS = {
   shelf: ['Library', 'books', 'Your library is empty', 'Tap + to scan a barcode or search for a book.'],
-  next: ['Up Next', 'next', 'Nothing up next', 'Open any book and choose Up Next to line it up here.'],
+  next: ['Up Next', 'next', 'Nothing up next', 'Open any book and choose Up Next to line it up here.', 'Hold a cover to drag it into a new order.'],
   wish: ['Wishlist', 'wish', 'Your wishlist is empty', 'In Add Books, choose Wishlist before you add.'],
   read: ['Finished', 'read', 'No finished books yet', 'Open a book and choose Finished to rate it.'],
 };
@@ -359,9 +363,10 @@ function render() {
   const q = $('#q').value.trim();
   const shown = visible(books, tab, q);
   const queue = books.filter(b => b.status === 'next').map(b => b.id);
-  const [name, icon, emptyTitle, emptyText] = TABS[tab];
+  const [name, icon, emptyTitle, emptyText, hint] = TABS[tab];
   $('#title').textContent = $('#miniTitle').textContent = name;
-  $('#count').textContent = q ? `${plural(shown.length, 'match')} for “${q}”` : plural(shown.length, 'book');
+  const count = q ? `${plural(shown.length, 'match')} for “${q}”` : plural(shown.length, 'book');
+  $('#count').textContent = !q && hint && shown.length > 1 ? `${count} · ${hint}` : count;
   $('#list').innerHTML = shown.map(b => {
     const n = queue.indexOf(b.id) + 1;
     const mark = b.status === 'next' ? `<span class="ribbon">${n}</span>`
@@ -444,20 +449,83 @@ function openBook(tile) {
   document.startViewTransition(show);
 }
 
-// Long-press (or right-click) a cover for quick actions without opening the sheet.
+// Hold a cover to lift it. On Up Next that starts a drag to reorder the queue; releasing
+// without moving opens the quick actions, the way the iPhone home screen behaves.
 let press = null;
 let ctxId = null;
 let ctxAt = 0;
+const reorderable = () => tab === 'next' && !$('#q').value.trim();
+
 $('#list').addEventListener('pointerdown', e => {
   const tile = e.target.closest('.tile');
   if (!tile || e.button > 0) return;
-  press = { tile, x: e.clientX, y: e.clientY, fired: false };
-  press.timer = setTimeout(() => { press.fired = true; openCtx(tile); }, 450);
+  press = { tile, x: e.clientX, y: e.clientY, fired: false, moved: false, id: e.pointerId };
+  press.timer = setTimeout(() => {
+    press.fired = true;
+    if (reorderable()) liftTile(tile, e.pointerId); else openCtx(tile);
+  }, 450);
 });
 const cancelPress = () => { if (press && !press.fired) { clearTimeout(press.timer); press = null; } };
-$('#list').addEventListener('pointermove', e => { if (press && Math.hypot(e.clientX - press.x, e.clientY - press.y) > 10) cancelPress(); });
-$('#list').addEventListener('pointerup', cancelPress);
-$('#list').addEventListener('pointercancel', cancelPress);
+$('#list').addEventListener('pointermove', e => {
+  if (!press) return;
+  const far = Math.hypot(e.clientX - press.x, e.clientY - press.y) > 10;
+  if (!press.fired) { if (far) cancelPress(); return; }
+  if (!press.lifted) return;
+  if (far) press.moved = true;
+  dragTile(e);
+});
+$('#list').addEventListener('pointerup', e => {
+  if (press?.lifted) {
+    const { tile, moved } = press;
+    dropTile();
+    if (!moved) openCtx(tile); // held, then let go without moving: she wanted the menu
+    return;
+  }
+  cancelPress();
+});
+$('#list').addEventListener('pointercancel', () => { if (press?.lifted) dropTile(); else cancelPress(); });
+// While a cover is lifted the finger must move the cover, not scroll the page.
+$('#list').addEventListener('touchmove', e => { if (press?.lifted) e.preventDefault(); }, { passive: false });
+
+// Reordering: the lifted cover follows her finger and the others shuffle around it live.
+function liftTile(tile, pointerId) {
+  const li = tile.closest('li');
+  press.lifted = true;
+  press.li = li;
+  press.rect = li.getBoundingClientRect();
+  li.classList.add('lifted');
+  try { $('#list').setPointerCapture(pointerId); } catch {}
+}
+
+function dragTile(e) {
+  const { li, rect } = press;
+  li.style.transform = `translate(${e.clientX - press.x}px, ${e.clientY - press.y}px)`;
+  const over = document.elementsFromPoint(e.clientX, e.clientY)
+    .map(el => el.closest?.('#list > li')).find(el => el && el !== li);
+  if (!over) return;
+  const items = [...$('#list').children];
+  const after = items.indexOf(over) > items.indexOf(li);
+  over[after ? 'after' : 'before'](li);
+  // The element moved under her finger, so re-anchor the drag to where it sits now.
+  const now = li.getBoundingClientRect();
+  press.x += now.left - rect.left;
+  press.y += now.top - rect.top;
+  press.rect = now;
+  li.style.transform = `translate(${e.clientX - press.x}px, ${e.clientY - press.y}px)`;
+}
+
+function dropTile() {
+  const { li } = press;
+  li.classList.remove('lifted');
+  li.style.transform = '';
+  press = null;
+  // Commit the on-screen order back into the queue, leaving every other book untouched.
+  const order = [...$('#list').children].map(el => el.querySelector('.tile')?.dataset.id);
+  const queue = order.map(id => books.find(b => b.id === id)).filter(b => b && b.status === 'next');
+  let i = 0;
+  books = books.map(b => (b.status === 'next' ? queue[i++] || b : b));
+  save();
+}
 $('#list').addEventListener('contextmenu', e => {
   const tile = e.target.closest('.tile');
   if (!tile) return;
@@ -661,8 +729,25 @@ function openAdd() {
 $('#add').onclick = $('#emptyAdd').onclick = openAdd;
 $('#addTo').onclick = e => { const b = e.target.closest('[data-to]'); if (b) { addTo = b.dataset.to; renderAddTo(); drawResults(); } };
 $('#close').onclick = () => closeSheet($('#dlg'));
+// Results arrive as she types; Enter just skips the wait.
+const ADD_HINT = 'Search by title, author or ISBN, or scan the barcode on the back cover.';
+let typeTimer;
+$('#q2').oninput = () => {
+  clearTimeout(typeTimer);
+  const q = $('#q2').value.trim();
+  if (q.length < 3) {
+    searchSeq++; // abandon whatever is in flight
+    searched = false;
+    found = [];
+    $('#results').innerHTML = '';
+    $('#msg').textContent = ADD_HINT;
+    return;
+  }
+  typeTimer = setTimeout(() => lookup(q), /^[\d-]{10,17}x?$/i.test(q) ? 150 : 450);
+};
 $('#find').onsubmit = e => {
   e.preventDefault();
+  clearTimeout(typeTimer);
   const q = $('#q2').value.trim();
   if (q) { $('#q2').blur(); lookup(q); }
 };
@@ -701,7 +786,9 @@ async function googleBooks(q, max = 20) {
   }
 }
 
+let searchSeq = 0;
 async function lookup(q) {
+  const seq = ++searchSeq; // a slower earlier search must never overwrite a newer one
   searched = true;
   $('#msg').textContent = 'Searching…';
   $('#results').innerHTML = '<li class="row skel"><span class="cover"></span><span><i style="width:70%"></i><i style="width:40%"></i></span></li>'.repeat(4);
@@ -723,10 +810,12 @@ async function lookup(q) {
       }));
       if (!found.length) found = await googleBooks(q);
     }
+    if (seq !== searchSeq) return; // she typed on; a newer search owns the results
     $('#msg').textContent = found.length ? `Tap + to add to ${PLACES.find(p => p[0] === addTo)[1]}.`
       : isbn ? `No book found for ISBN ${isbn}. Search by the title, or add it yourself.` : 'No matches. Check the spelling, or add it yourself.';
     drawResults();
   } catch {
+    if (seq !== searchSeq) return;
     $('#results').innerHTML = '';
     $('#msg').textContent = "Couldn't reach the book services. Check your connection, then search again.";
   }
@@ -750,7 +839,7 @@ function manualForm(prefill = '') {
     $('#results').innerHTML = '';
     $('#msg').textContent = `Added “${title}” to ${PLACES.find(p => p[0] === addTo)[1]}.`;
   };
-  $('#byhand').elements.title.focus();
+  // No autofocus: this form can appear mid-keystroke, and stealing the caret would break her typing.
 }
 
 function drawResults() {
