@@ -5,3 +5,6 @@
 .impeccable/review/
 .impeccable/questions/
 .impeccable/hook.cache.json
+
+# graphify knowledge graph output (would be published by GitHub Pages)
+graphify-out/
