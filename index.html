@@ -9,8 +9,18 @@
 <!-- Android installs from the manifest (the apple-* tags above are iPhone-only); without it Chrome opens a browser tab. -->
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
-<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0c0c0d">
+<meta name="theme-color" content="#ffffff">
+<script>
+  // Android's installed app colours its status bar from theme-color but ignores the media attribute,
+  // so a dark phone got a white bar. One tag, set from the phone's mode and kept in step when it changes.
+  (() => {
+    const dark = matchMedia('(prefers-color-scheme: dark)');
+    const tag = document.querySelector('meta[name="theme-color"]');
+    const set = () => { tag.content = dark.matches ? '#0c0c0d' : '#ffffff'; };
+    set();
+    dark.addEventListener('change', set);
+  })();
+</script>
 <title>Bookshelf</title>
 <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.23.0/umd/index.min.js" integrity="sha384-0ASr5PEWAMtTnWsn0PzKmioHVDA4+QqFiJr94io/0DCrGP6E1gRAmbO6O8y5WZW9" crossorigin="anonymous"></script>
 <style>
