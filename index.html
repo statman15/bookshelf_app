@@ -125,6 +125,10 @@
   .menu > * + * { box-shadow: inset 0 .5px 0 var(--sep); }
   .menu :active { background: var(--fill); }
   .menu input { position: absolute; width: 0; opacity: 0; }
+  .menu-group { box-shadow: 0 8px 0 var(--fill); margin-bottom: 8px; }
+  .menu-group > * + * { box-shadow: inset 0 .5px 0 var(--sep); }
+  .menu-group h4 { margin: 0; padding: 10px 16px 4px; font-size: 13px; font-weight: 400; color: var(--label2); }
+  .menu-group button .ic { width: 18px; height: 18px; color: var(--tint); }
 
   /* Sheets rise from the bottom and drag down to dismiss. */
   .sheet { position: fixed; inset: auto 0 0 0; width: 100%; max-width: 600px; max-height: calc(100dvh - env(safe-area-inset-top) - 10px); margin: 0 auto;
@@ -255,7 +259,7 @@
 
 <header class="topbar">
   <span id="miniTitle" aria-hidden="true">Library</span>
-  <button class="navbtn" popovertarget="menu" aria-label="Backup options"><svg class="ic"><use href="#dots"/></svg></button>
+  <button class="navbtn" popovertarget="menu" aria-label="Sort and backup options"><svg class="ic"><use href="#dots"/></svg></button>
 </header>
 
 <main>
@@ -275,6 +279,7 @@
 </main>
 
 <div id="menu" class="menu glass" popover>
+  <div id="sortBy" class="menu-group" role="group" aria-label="Sort by"></div>
   <button id="export">Save Backup<svg class="ic" aria-hidden="true"><use href="#export"/></svg></button>
   <label>Restore from Backup<svg class="ic" aria-hidden="true"><use href="#restore"/></svg><input id="import" type="file" accept="application/json,.json"></label>
 </div>
@@ -359,9 +364,39 @@ function visible(books, tab, q) {
   return books.filter(b => tab === 'shelf' ? b.status !== 'wish' : b.status === tab);
 }
 
+// Sorting, one choice for every list except Up Next, whose order is her own.
+const SORTS = [['added', 'Date Added'], ['az', 'Title A–Z'], ['za', 'Title Z–A'], ['year', 'Release Year']];
+let sortBy = localStorage.sort || 'added';
+const titleKey = b => String(b.title).replace(/^(the|a|an)\s+/i, '').toLowerCase();
+const yearOf = b => b.details?.year || b.year || 0;
+function sorted(list, by = sortBy) {
+  // ponytail: "Date Added" is array order; dragging Up Next reshuffles those books among their own slots. Store an added timestamp if that ever matters.
+  if (by === 'added') return list;
+  const cmp = {
+    az: (a, b) => titleKey(a).localeCompare(titleKey(b)),
+    za: (a, b) => titleKey(b).localeCompare(titleKey(a)),
+    year: (a, b) => (yearOf(b) || -1) - (yearOf(a) || -1), // newest first; books with no year yet go last
+  }[by];
+  return [...list].sort(cmp);
+}
+
+function renderSort() {
+  $('#sortBy').hidden = tab === 'next';
+  $('#sortBy').innerHTML = '<h4>Sort By</h4>' + SORTS.map(([v, l]) =>
+    `<button role="menuitemradio" aria-checked="${sortBy === v}" data-sort="${v}">${l}${sortBy === v ? ic('check') : ''}</button>`).join('');
+}
+$('#sortBy').onclick = e => {
+  const btn = e.target.closest('[data-sort]');
+  if (!btn) return;
+  sortBy = localStorage.sort = btn.dataset.sort;
+  $('#menu').hidePopover();
+  render();
+};
+
 function render() {
   const q = $('#q').value.trim();
-  const shown = visible(books, tab, q);
+  const shown = tab === 'next' ? visible(books, tab, q) : sorted(visible(books, tab, q));
+  renderSort();
   const queue = books.filter(b => b.status === 'next').map(b => b.id);
   const [name, icon, emptyTitle, emptyText, hint] = TABS[tab];
   $('#title').textContent = $('#miniTitle').textContent = name;

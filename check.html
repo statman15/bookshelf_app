@@ -24,6 +24,22 @@ addEventListener("load", async () => {
     const titles = (tab, q) => w.visible(books, tab, q).map(b => b.title).join();
     const cases = [['shelf', '', 'Dune,Ulysses'], ['wish', '', 'Emma'], ['next', '', 'Ulysses'], ['read', '', 'Dune'], ['read', 'austen', 'Emma']];
     for (const [tab, q, want] of cases) if (titles(tab, q) !== want) throw new Error(`${tab}/${q}: ${titles(tab, q)} != ${want}`);
+
+    // Sorting: "The" is ignored for A-Z, and books with no year sort after dated ones.
+    const shelf = [
+      { title: 'The Road', details: { year: 2006 } },
+      { title: 'Atonement', year: 2001 },
+      { title: 'Zorba the Greek' },
+      { title: 'Middlemarch', details: { year: 1871 } },
+    ];
+    const order = by => w.sorted(shelf, by).map(b => b.title).join();
+    const sorts = [
+      ['added', 'The Road,Atonement,Zorba the Greek,Middlemarch'],
+      ['az', 'Atonement,Middlemarch,The Road,Zorba the Greek'],
+      ['za', 'Zorba the Greek,The Road,Middlemarch,Atonement'],
+      ['year', 'The Road,Atonement,Middlemarch,Zorba the Greek'],
+    ];
+    for (const [by, want] of sorts) if (order(by) !== want) throw new Error(`sort ${by}: ${order(by)} != ${want}`);
     out.textContent = 'PASS';
   } catch (e) {
     out.textContent = 'FAIL ' + e.message;
