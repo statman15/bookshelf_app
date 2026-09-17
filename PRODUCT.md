@@ -39,6 +39,7 @@ No account, no social feed, no tracking: one file on her phone that knows her bo
 - Search filters her own books by title or author.
 - Book data and covers come from Open Library (free, no key), with Google Books as a fallback for editions Open Library lacks. Google Books is used without an API key, so it shares a global allowance and often returns nothing; treat it as a bonus, never a guarantee.
 - When no service has the book, she can add it by hand with title and author.
+- She can photograph her own copy (or pick a photo) as a book's cover; it overrides the catalogue cover and can be removed. Photos are stored on the phone at about 40-50KB each, which caps them at roughly 100 in browser storage.
 - Book details (year, page count, genre, publisher, description) are fetched on first open and saved with the book.
 - Barcode reading uses ZXing on a photo (EAN-13 ISBN).
 - Data lives in localStorage on the phone; JSON backup and restore through the share sheet protects against loss.
